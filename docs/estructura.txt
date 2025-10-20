@@ -1,4 +1,4 @@
-proyecto-gestion-veterinaria/
+MiVet/
 ├── backend/                  # Carpeta principal del servidor (Node.js + Express + MySQL). Contiene toda la lógica del backend.
 │   ├── config/               # Configuraciones reutilizables, como conexión a DB y variables de entorno.
 │   │   └── database.js       # Archivo para configurar la conexión Sequelize con MySQL usando dotenv para variables seguras (DB_HOST, DB_USER, etc.).
