@@ -1,0 +1,1 @@
+//Verifica que el usuario tenga el rol requerido (Admin, etc.)

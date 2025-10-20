@@ -1,0 +1,4 @@
+/*Estilos globales y directivas de TailwindCSS*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

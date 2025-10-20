@@ -1,0 +1,36 @@
+# Dependencias
+/backend/node_modules/
+/frontend/node_modules/
+
+# Variables de entorno
+# ¡IMPORTANTE! No subir archivos .env a Git
+/backend/.env
+/frontend/.env
+*.local
+
+# Build artifacts y caché
+/frontend/dist/
+/frontend/.vite/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Directorios y archivos de editores de código
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Archivos generados por el sistema operativo
+.DS_Store
+Thumbs.db
