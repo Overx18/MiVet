@@ -1,0 +1,92 @@
+proyecto-gestion-veterinaria/
+├── backend/                  # Carpeta principal del servidor (Node.js + Express + MySQL). Contiene toda la lógica del backend.
+│   ├── config/               # Configuraciones reutilizables, como conexión a DB y variables de entorno.
+│   │   └── database.js       # Archivo para configurar la conexión Sequelize con MySQL usando dotenv para variables seguras (DB_HOST, DB_USER, etc.).
+│   ├── controllers/          # Controladores que manejan la lógica de negocio para cada módulo (ej.: autenticación, mascotas).
+│   │   ├── authController.js # Maneja login, registro, logout, recuperación de contraseña usando jsonwebtoken y bcryptjs.
+│   │   ├── userController.js # Gestiona perfiles de usuarios y roles (asignación, modificación).
+│   │   ├── petController.js  # Controla CRUD para mascotas y especies.
+│   │   ├── appointmentController.js # Maneja programación, cancelación y pagos de citas, integrando calendario y servicios.
+│   │   ├── serviceController.js # Gestiona catálogo de servicios.
+│   │   ├── inventoryController.js # Controla inventario (productos, stock).
+│   │   ├── medicalHistoryController.js # Registra y consulta historial médico.
+│   │   ├── dashboardController.js # Proporciona datos para dashboards por rol.
+│   │   ├── reportController.js # Genera reportes (ingresos, etc.) exportables.
+│   │   └── configController.js # Maneja configuración del sistema (horarios, alertas).
+│   ├── middlewares/          # Middlewares para autenticación, validación y errores.
+│   │   ├── authMiddleware.js # Verifica tokens JWT y autoriza por roles usando jsonwebtoken y passport.
+│   │   ├── validationMiddleware.js # Usa express-validator para validar inputs en rutas.
+│   │   └── errorMiddleware.js # Maneja errores globales con http-errors.
+│   ├── models/               # Modelos Sequelize para entidades de la DB.
+│   │   ├── User.js           # Modelo para usuarios (con roles, usando uuid para IDs).
+│   │   ├── Pet.js            # Modelo para mascotas (asociado a User, con especie).
+│   │   ├── Species.js        # Modelo para catálogo de especies.
+│   │   ├── Appointment.js    # Modelo para citas (asociado a Pet, Service, User).
+│   │   ├── Service.js        # Modelo para servicios.
+│   │   ├── Inventory.js      # Modelo para productos de inventario.
+│   │   ├── MedicalHistory.js # Modelo para historial médico (asociado a Pet y Appointment).
+│   │   └── Role.js           # Modelo para roles (relacionado con User).
+│   ├── routes/               # Rutas Express para cada módulo.
+│   │   ├── authRoutes.js     # Rutas para autenticación (/login, /register, /logout).
+│   │   ├── userRoutes.js     # Rutas para gestión de usuarios y perfiles.
+│   │   ├── petRoutes.js      # Rutas para mascotas y especies.
+│   │   ├── appointmentRoutes.js # Rutas para citas, calendario y pagos.
+│   │   ├── serviceRoutes.js  # Rutas para servicios.
+│   │   ├── inventoryRoutes.js # Rutas para inventario.
+│   │   ├── medicalHistoryRoutes.js # Rutas para historial médico.
+│   │   ├── dashboardRoutes.js # Rutas para datos de dashboards.
+│   │   ├── reportRoutes.js   # Rutas para generación de reportes.
+│   │   └── configRoutes.js   # Rutas para configuración del sistema.
+│   ├── utils/                # Utilidades reutilizables.
+│   │   ├── emailUtils.js     # Funciones para enviar emails (usando nodemailer o similar, simulado si no hay integración externa).
+│   │   └── uuidUtils.js      # Genera IDs únicos con uuid.
+│   ├── app.js                # Archivo principal de Express: configura middlewares (helmet, cors), rutas y errores.
+│   ├── server.js             # Inicia el servidor (app.listen), carga dotenv y conecta DB.
+│   ├── .env                  # Variables de entorno (DB creds, JWT_SECRET; no commitear a Git).
+│   ├── .env.example          # Ejemplo de .env para desarrollo.
+│   └── package.json          # Dependencias: express, sequelize, mysql2, dotenv, helmet, cors, jsonwebtoken, bcryptjs, passport, express-validator, http-errors, uuid, nodemon (dev).
+├── frontend/                 # Carpeta principal del cliente (React + Vite + TailwindCSS). Contiene la UI y lógica del frontend.
+│   ├── public/               # Archivos estáticos públicos (ej.: favicon, index.html base).
+│   │   └── vite.svg          # Logo por defecto de Vite (puede reemplazarse).
+│   ├── src/                  # Código fuente principal.
+│   │   ├── assets/           # Imágenes, íconos y otros assets estáticos.
+│   │   │   └── images/       # Carpeta para imágenes usadas en la app (ej.: logos de mascotas).
+│   │   ├── components/       # Componentes reutilizables.
+│   │   │   ├── AuthForm.js   # Formulario genérico para login/registro usando react-hook-form.
+│   │   │   ├── Calendar.js   # Componente interactivo para calendario con drag-and-drop (integra recharts si aplica).
+│   │   │   ├── Dashboard.js  # Dashboard base, personalizado por rol usando zustand para estado.
+│   │   │   ├── PetCard.js    # Tarjeta para mostrar mascotas en listas.
+│   │   │   ├── Notification.js # Maneja notificaciones con react-hot-toast.
+│   │   │   ├── FormInput.js  # Input reutilizable con validación (react-hook-form).
+│   │   │   └── IconButton.js # Botones con íconos de @heroicons/react.
+│   │   ├── hooks/            # Hooks personalizados.
+│   │   │   └── useAuth.js    # Hook para manejo de autenticación con zustand y axios.
+│   │   ├── pages/            # Páginas principales (vistas) usando react-router-dom.
+│   │   │   ├── Home.js       # Página de inicio con carrusel y formulario de contacto.
+│   │   │   ├── Login.js      # Página de inicio de sesión.
+│   │   │   ├── Register.js   # Página de registro.
+│   │   │   ├── Profile.js    # Página para editar perfil.
+│   │   │   ├── Pets.js       # Lista y gestión de mascotas.
+│   │   │   ├── Appointments.js # Programación y calendario de citas.
+│   │   │   ├── Services.js   # Catálogo de servicios (para Admin).
+│   │   │   ├── Inventory.js  # Gestión de inventario.
+│   │   │   ├── MedicalHistory.js # Consulta de historial médico.
+│   │   │   ├── Reports.js    # Generación de reportes (para Admin).
+│   │   │   ├── Config.js     # Configuración del sistema (para Admin).
+│   │   │   └── NotFound.js   # Página 404.
+│   │   ├── services/         # Servicios para llamadas API con axios y @tanstack/react-query.
+│   │   │   ├── api.js        # Configuración base de axios (baseURL, interceptores para tokens).
+│   │   │   └── queries.js    # Hooks de react-query para fetching (ej.: getPets, postAppointment).
+│   │   ├── stores/           # Tiendas de estado con zustand.
+│   │   │   └── authStore.js  # Almacena estado de usuario, sesión y roles.
+│   │   ├── App.js            # Componente raíz: configura rutas con react-router-dom y proveedores (react-query, zustand).
+│   │   ├── main.js           # Entry point: renderiza App con ReactDOM.
+│   │   ├── index.css         # Estilos globales (importa TailwindCSS).
+│   │   └── tailwind.config.js # Configuración de TailwindCSS (temas, plugins).
+│   ├── vite.config.js        # Configuración de Vite (plugins, proxy para backend).
+│   ├── postcss.config.js     # Configuración para PostCSS con TailwindCSS.
+│   ├── .eslintrc.js          # Reglas de ESLint para React.
+│   └── package.json          # Dependencias: react, react-dom, axios, react-router-dom, @tanstack/react-query, react-hot-toast, react-hook-form, @headlessui/react, @heroicons/react, clsx, zustand, recharts; dev: vite, tailwindcss, postcss, autoprefixer.
+├── .gitignore                # Ignora node_modules, .env, dist, etc.
+├── README.md                 # Documentación del proyecto: instalación, scripts, contribución.
+└── package.json              # Si es monorepo, dependencias raíz o scripts para ambos (opcional; de lo contrario, cada carpeta tiene el suyo).
