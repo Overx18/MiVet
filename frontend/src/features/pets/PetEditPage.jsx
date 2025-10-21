@@ -47,19 +47,17 @@ export default function PetEditPage() {
     queryFn: () => fetchClients(token),
     enabled: !!token && (user?.role === 'Admin' || user?.role === 'Recepcionista'),
   });
-/*
+  
   // Rellenar el formulario cuando los datos de la mascota se cargan
   useEffect(() => {
     if (pet) {
-      // Formatear la fecha para el input type="date" (YYYY-MM-DD)
       const formattedPet = {
         ...pet,
-        birthDate: pet.birthDate ? new Date(pet.birthDate).toISOString().split('T')[0] : '',
       };
       reset(formattedPet);
         }
       }, [pet, reset]);
-*/
+
   // Mutación para actualizar la mascota
   const mutation = useMutation({
     mutationFn: updatePet,
@@ -145,7 +143,7 @@ export default function PetEditPage() {
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           />
         </div>
-         {/*  
+         {  
         <div>
           <label htmlFor="birthDate" className="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
           <input
@@ -155,7 +153,7 @@ export default function PetEditPage() {
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           />
         </div>
-         */}
+         }
         <button
           type="submit"
           disabled={mutation.isPending}

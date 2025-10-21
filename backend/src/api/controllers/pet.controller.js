@@ -103,33 +103,54 @@ export const updatePet = async (req, res, next) => {
 // [Todos los autenticados] Obtener lista de mascotas con filtros, paginación y ordenamiento
 export const getAllPets = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, sortBy = 'createdAt', order = 'DESC', name, speciesId, race, ownerId } = req.query;
+    const { page = 1, limit = 10, ownerName, petName, speciesId, race} = req.query;
     const offset = (page - 1) * limit;
 
     // 1. Construir la cláusula 'where' para los filtros
-    const where = { isActive: true }; // Solo mostrar mascotas activas
+    const whereClause = { }; // isActive: true Solo mostrar mascotas activas
+    const includeClause = [
+      {
+        model: User,
+        as: 'owner',
+        attributes: ['id', 'firstName', 'lastName'],
+        where: {}, // Objeto 'where' para el modelo User
+      },
+      {
+        model: Species,
+        attributes: ['id', 'name'],
+      },
+    ];
 
-    if (name) where.name = { [Op.like]: `%${name}%` };
-    if (speciesId) where.speciesId = speciesId;
-    if (race) where.race = { [Op.like]: `%${race}%` };
-    if (ownerId) where.ownerId = ownerId;
+        // Filtro por nombre de la mascota
+    if (petName) {
+      whereClause.name = { [Op.like]: `%${petName}%` };
+    }
+    if (speciesId) whereClause.speciesId = speciesId;
+    if (race) whereClause.race = { [Op.like]: `%${race}%` };
+
+    // Filtro por nombre del propietario (busca en nombre y apellido)
+    if (ownerName) {
+      includeClause[0].where = {
+        [Op.or]: [
+          { firstName: { [Op.like]: `%${ownerName}%` } },
+          { lastName: { [Op.like]: `%${ownerName}%` } },
+        ],
+      };
+    }
 
     // 2. Restricción por rol: Clientes solo ven sus propias mascotas
     if (req.user.role === 'Cliente') {
-      where.ownerId = req.user.id;
+      whereClause.ownerId = req.user.id;
     }
 
     // 3. Realizar la consulta con paginación y asociaciones
     const { count, rows } = await Pet.findAndCountAll({
-      where: where,
+      where: whereClause,
+      include: includeClause,
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [[sortBy, order]],
-      include: [ // Incluir datos del propietario y la especie
-        { model: User, as: 'owner', attributes: ['id', 'firstName', 'lastName'] },
-        { model: Species, attributes: ['id', 'name'] },
-      ],
-      distinct: true, // Necesario para que el count sea correcto con includes
+      order: [['createdAt', 'DESC']],
+      distinct: true,
     });
 
     res.status(200).json({
@@ -137,7 +158,7 @@ export const getAllPets = async (req, res, next) => {
       totalItems: count,
       totalPages: Math.ceil(count / limit),
       currentPage: parseInt(page),
-      pets: rows,
+      pets: rows, 
     });
   } catch (error) {
     next(error);

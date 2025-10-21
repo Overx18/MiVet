@@ -16,7 +16,7 @@ const deletePetById = ({ id, token }) => apiClient.delete(`/pets/${id}`, { heade
 export default function PetListPage() {
   const { token } = useAuthStore();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({ name: '', page: 1, limit: 10 });
+  const [filters, setFilters] = useState({ ownerName: '', page: 1, limit: 10 });
 
   const { data, isLoading } = useQuery({
     queryKey: ['pets', filters],
@@ -28,7 +28,7 @@ export default function PetListPage() {
   const deleteMutation = useMutation({
     mutationFn: deletePetById,
     onSuccess: () => {
-      toast.success('Mascota archivada.');
+      toast.success('Mascota desactivada.');
       queryClient.invalidateQueries({ queryKey: ['pets'] });
     },
     onError: (error) => toast.error(error.response?.data?.message || 'Error al eliminar.'),
@@ -43,7 +43,7 @@ export default function PetListPage() {
   };
 
   const handleDelete = (id) => {
-    if (window.confirm('¿Estás seguro de que quieres archivar esta mascota?')) {
+    if (window.confirm('¿Estás seguro de que quieres desactivar esta mascota?')) {
       deleteMutation.mutate({ id, token });
     }
   };
@@ -61,9 +61,9 @@ export default function PetListPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <input
           type="text"
-          name="name"
-          placeholder="Buscar por nombre..."
-          value={filters.name}
+          name="ownerName"
+          placeholder="Buscar por propietario..."
+          value={filters.ownerName}
           onChange={handleFilterChange}
           className="w-full px-3 py-2 border rounded-md"
         />
@@ -71,44 +71,53 @@ export default function PetListPage() {
       </div>
 
       {/* Tabla de Mascotas */}
-      {isLoading ? (
-        <div>Cargando mascotas...</div>
-      ) : (
-        <>
-          <div className="overflow-x-auto">
-            <table className="min-w-full bg-white">
-              <thead>
-                <tr>
-                  <th className="py-2 px-4 border-b">Nombre</th>
-                  <th className="py-2 px-4 border-b">Especie</th>
-                  <th className="py-2 px-4 border-b">Propietario</th>
-                  <th className="py-2 px-4 border-b">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data?.pets?.map(pet => (
-                  <tr key={pet.id}>
-                    <td className="py-2 px-4 border-b">{pet.name}</td>
-                    <td className="py-2 px-4 border-b">{pet.Species?.name}</td>
-                    <td className="py-2 px-4 border-b">{pet.owner?.firstName} {pet.owner?.lastName}</td>
-                    <td className="py-2 px-4 border-b flex items-center space-x-2">
-                      <Link to={`/pets/${pet.id}/edit`} className="px-3 py-1 text-sm text-white bg-yellow-500 rounded-md hover:bg-yellow-600">Editar</Link>
-                      <button onClick={() => handleDelete(pet.id)} disabled={deleteMutation.isPending} className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-gray-400">Eliminar</button>
-                    </td>
+        {isLoading ? (
+          <div className="text-center">Cargando mascotas...</div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+          <table className="min-w-full bg-white">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b text-center">Propietario</th>
+                <th className="py-2 px-4 border-b text-center">Nombre</th>
+                <th className="py-2 px-4 border-b text-center">Especie</th>
+                <th className="py-2 px-4 border-b text-center">Estado</th>
+                <th className="py-2 px-4 border-b text-center">Acciones</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {data?.pets?.map(pet => (
+                <tr key={pet.id}>
+                  <td className="py-2 px-4 border-b text-center">{pet.owner?.firstName} {pet.owner?.lastName}</td>
+                  <td className="py-2 px-4 border-b text-center">{pet.name}</td>
+                  <td className="py-2 px-4 border-b text-center">{pet.Species?.name}</td>
+                  <td className="py-2 px-4 border-b text-center">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${pet.isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                      {pet.isActive ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </td>
+                  <td className="py-2 px-4 border-b flex items-center justify-center space-x-2">
+                    <Link to={`/pets/${pet.id}/edit`} className="px-3 py-1 text-sm text-white bg-yellow-500 rounded-md hover:bg-yellow-600">Editar</Link>
+                    {pet.isActive && (
+                      <button onClick={() => handleDelete(pet.id)} disabled={deleteMutation.isPending} className="px-3 py-1 text-sm text-white bg-red-600 rounded-md hover:bg-red-700 disabled:bg-gray-400">Desactivar</button>
+                    )}                  </td>
+                </tr>
+                  ))}
+                </tbody>
+              </table>
+                </div>
 
-          {/* Paginación */}
-          <div className="flex justify-between items-center mt-6">
-            <span>Página {data?.currentPage} de {data?.totalPages}</span>
-            <div>
-              <button onClick={() => handlePageChange(data.currentPage - 1)} disabled={data?.currentPage <= 1} className="px-4 py-2 border rounded-md mr-2 disabled:opacity-50">Anterior</button>
-              <button onClick={() => handlePageChange(data.currentPage + 1)} disabled={data?.currentPage >= data?.totalPages} className="px-4 py-2 border rounded-md disabled:opacity-50">Siguiente</button>
-            </div>
-          </div>
+            {/* Paginación */}
+            {data?.totalPages > 1 && (
+              <div className="flex justify-between items-center mt-6">
+                <span>Página {data?.currentPage} de {data?.totalPages}</span>
+                <div>
+                  <button onClick={() => handlePageChange(data.currentPage - 1)} disabled={data?.currentPage <= 1} className="px-4 py-2 border rounded-md mr-2 disabled:opacity-50">Anterior</button>
+                  <button onClick={() => handlePageChange(data.currentPage + 1)} disabled={data?.currentPage >= data?.totalPages} className="px-4 py-2 border rounded-md disabled:opacity-50">Siguiente</button>
+                </div>
+              </div>
+            )}
         </>
       )}
     </div>
