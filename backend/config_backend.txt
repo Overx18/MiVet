@@ -6,7 +6,7 @@ cd backend
 npm init -y
 
 3. Instalar Dependencias de Producción Instala los paquetes necesarios para que la aplicación funcione, según se especifica en herramientas.md.
-npm install express sequelize mysql2 dotenv helmet cors jsonwebtoken bcryptjs passport express-validator http-errors uuid
+npm install express sequelize mysql2 dotenv helmet cors jsonwebtoken bcryptjs passport express-validator http-errors uuid nodemailer
 
 4. Instalar Dependencias de Desarrollo Instala nodemon para que el servidor se reinicie automáticamente al detectar cambios en los archivos.
 npm install -D nodemon

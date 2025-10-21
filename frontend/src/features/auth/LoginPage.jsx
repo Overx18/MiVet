@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
+import { Link } from 'react-router-dom';
 
 // Función que realiza la petición de login
 const loginUser = async (credentials) => {
@@ -51,6 +52,14 @@ export default function LoginPage() {
             <label className="block text-sm font-medium">Contraseña</label>
             <input type="password" {...register('password', { required: 'La contraseña es obligatoria' })} className="w-full px-3 py-2 border rounded-md" />
             {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
+          </div>
+          {/* 2. Añadir el enlace de recuperación */}
+          <div className="flex items-center justify-end">
+            <div className="text-sm">
+              <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
           </div>
           <button type="submit" disabled={mutation.isPending} className="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400">
             {mutation.isPending ? 'Ingresando...' : 'Ingresar'}

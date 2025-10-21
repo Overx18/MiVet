@@ -2,7 +2,7 @@
 // backend/src/api/routes/auth.routes.js
 import { Router } from 'express';
 import { body } from 'express-validator';
-import { register, login } from '../controllers/auth.controller.js';
+import { register, login, forgotPassword, resetPassword } from '../controllers/auth.controller.js';
 
 const router = Router();
 
@@ -25,5 +25,9 @@ const loginValidation = [
 router.post('/register', registerValidation, register);
 // POST /api/auth/login
 router.post('/login', loginValidation, login);
+// Ruta para solicitar recuperación de contraseña
+router.post('/forgot-password', [body('email').isEmail()], forgotPassword);
+// Ruta para restablecer la contraseña con el token
+router.patch('/reset-password/:token', [body('password').isLength({ min: 6 })], resetPassword);
 
 export default router;

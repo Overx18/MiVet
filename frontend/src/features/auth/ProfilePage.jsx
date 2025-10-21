@@ -92,7 +92,7 @@ export default function ProfilePage() {
         </div>
         <div>
           <label className="block text-sm font-medium">Nueva Contraseña (dejar en blanco para no cambiar)</label>
-          <input type="password" {...register('password', { minLength: { value: 6, message: 'Mínimo 6 caracteres' } })} className="w-full px-3 py-2 border rounded-md" />
+          <input type="password" {...register('password', { minLength: { value: 6, message: 'Mínimo 6 caracteres' } })} className="w-full px-3 py-2 border rounded-md" autoComplete="new-password" />
           {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
         </div>
         <button type="submit" disabled={mutation.isPending} className="w-full px-4 py-2 font-bold text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:bg-gray-400">
