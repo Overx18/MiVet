@@ -1,1 +1,0 @@
-//Lógica para historial médico

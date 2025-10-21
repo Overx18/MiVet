@@ -1,1 +1,0 @@
-//Hook para acceder al estado de autenticación (desde Zustand)

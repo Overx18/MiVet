@@ -1,1 +1,0 @@
-//Manejador de errores centralizado

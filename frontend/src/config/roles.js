@@ -1,1 +1,0 @@
-//Define los roles de usuario (Admin, Cliente, etc.)
