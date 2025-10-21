@@ -1,0 +1,1 @@
+//Layout para páginas de login/registro

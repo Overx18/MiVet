@@ -1,0 +1,15 @@
+// backend/src/api/routes/index.js
+import { Router } from 'express';
+import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
+import speciesRoutes from './species.routes.js';
+import petRoutes from './pet.routes.js'; 
+
+const router = Router();
+
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+router.use('/species', speciesRoutes);
+router.use('/pets', petRoutes);
+
+export default router;
