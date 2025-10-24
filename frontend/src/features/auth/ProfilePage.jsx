@@ -35,7 +35,10 @@ export default function ProfilePage() {
 
   // 2. Poblar el formulario cuando los datos del perfil se cargan
   useEffect(() => {
-    if (profile) {
+    console.log('Perfil cargado:', profile);
+    if (profile?.user) {
+      reset(profile.user);
+    } else if (profile) {
       reset(profile);
     }
   }, [profile, reset]);

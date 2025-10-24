@@ -13,11 +13,12 @@ router.use(protect);
 const allowedToCreate = authorize('Cliente', 'Recepcionista', 'Admin');
 const allowedToModify = authorize('Cliente', 'Recepcionista', 'Veterinario', 'Admin');
 
+
 // GET /api/pets -> Listar todas las mascotas (con filtros y paginación)
 router.get('/', getAllPets);
 
 // POST /api/pets -> Crear una nueva mascota
-router.post('/', allowedToCreate, createPet);
+router.post('/', authorize('Cliente', 'Recepcionista', 'Admin'), createPet);
 
 // GET /api/pets -> Listar una mascota por ID
 router.get('/:id', getPet);

@@ -31,23 +31,24 @@ db.User.hasMany(db.Pet, { foreignKey: 'ownerId', as: 'pets' });
 db.Pet.belongsTo(db.User, { foreignKey: 'ownerId', as: 'owner' });
 
 // Especie tiene muchas Mascotas
-db.Species.hasMany(db.Pet, { foreignKey: 'speciesId' });
-db.Pet.belongsTo(db.Species, { foreignKey: 'speciesId' });
+db.Species.hasMany(db.Pet, { foreignKey: 'speciesId', as: 'pets' });
+db.Pet.belongsTo(db.Species, { foreignKey: 'speciesId', as: 'species' });
 
 // Mascota tiene muchas Citas
-db.Pet.hasMany(db.Appointment, { foreignKey: 'petId' });
-db.Appointment.belongsTo(db.Pet, { foreignKey: 'petId' });
+db.Pet.hasMany(db.Appointment, { foreignKey: 'petId', as: 'appointments' });
+db.Appointment.belongsTo(db.Pet, { foreignKey: 'petId', as: 'pet' });
 
 // Servicio tiene muchas Citas
-db.Service.hasMany(db.Appointment, { foreignKey: 'serviceId' });
-db.Appointment.belongsTo(db.Service, { foreignKey: 'serviceId' });
+db.Service.hasMany(db.Appointment, { foreignKey: 'serviceId', as: 'appointments' });
+db.Appointment.belongsTo(db.Service, { foreignKey: 'serviceId', as: 'service' });
 
 // Usuario (Profesional) tiene muchas Citas
 db.User.hasMany(db.Appointment, { foreignKey: 'professionalId', as: 'professionalAppointments' });
 db.Appointment.belongsTo(db.User, { foreignKey: 'professionalId', as: 'professional' });
 
 // Cita tiene un Historial Médico
-db.Appointment.hasOne(db.MedicalRecord, { foreignKey: 'appointmentId' });
-db.MedicalRecord.belongsTo(db.Appointment, { foreignKey: 'appointmentId' });
+db.Appointment.hasOne(db.MedicalRecord, { foreignKey: 'appointmentId', as: 'medicalRecord' });
+db.MedicalRecord.belongsTo(db.Appointment, { foreignKey: 'appointmentId', as: 'appointment' });
+
 
 export default db;

@@ -1,39 +1,33 @@
-//Lógica para CRUD de usuarios, roles
 // backend/src/api/controllers/user.controller.js
 import createError from 'http-errors';
 import db from '../models/index.js';
 
-const User = db.User;
+const { User } = db;
 
-// Obtener el perfil del usuario autenticado
-export const getProfile = async (req, res, next) => {
-  // El middleware 'protect' ya adjuntó el usuario a req.user
-  res.status(200).json(req.user);
+//  Obtener el perfil del usuario autenticado
+export const getProfile = async (req, res) => {
+  res.status(200).json({
+    message: 'Perfil obtenido correctamente.',
+    user: req.user,
+  });
 };
 
-// Actualizar el perfil del usuario autenticado
+//  Actualizar el perfil del usuario autenticado
 export const updateProfile = async (req, res, next) => {
   try {
     const user = await User.findByPk(req.user.id);
-
-    if (!user) {
-      return next(createError(404, 'Usuario no encontrado.'));
-    }
+    if (!user) return next(createError(404, 'Usuario no encontrado.'));
 
     const { firstName, lastName, phone, address, password } = req.body;
 
-    // Actualizar campos
-    user.firstName = firstName || user.firstName;
-    user.lastName = lastName || user.lastName;
-    user.phone = phone || user.phone;
-    user.address = address || user.address;
-
-    // Si se proporciona una nueva contraseña, el hook 'beforeSave' la encriptará
-    if (password) {
-      user.password = password;
-    }
-
-    await user.save();
+    // Actualizar solo los campos enviados
+    await user.update({
+      firstName: firstName?.trim() || user.firstName,
+      lastName: lastName?.trim() || user.lastName,
+      phone: phone?.trim() || user.phone,
+      address: address?.trim() || user.address,
+      ...(password ? { password } : {}), // Se encripta automáticamente por el hook beforeSave
+    });
 
     res.status(200).json({
       message: 'Perfil actualizado exitosamente.',
@@ -52,55 +46,62 @@ export const updateProfile = async (req, res, next) => {
   }
 };
 
-// [Admin] Obtener todos los usuarios
+// 👥 [Admin o Recepcionista] Obtener todos los usuarios con filtros
 export const getAllUsers = async (req, res, next) => {
   try {
+    const { role } = req.query;
     const filter = {};
 
-      // 2. APLICAR LÓGICA DE FILTRADO BASADA EN ROL
-  if (req.user.role === 'Recepcionista') {
-    // Si es recepcionista, forzar a que solo pueda ver clientes.
-    filter.role = 'Cliente';
-  } else if (req.query.role) {
-    // Si es Admin (o otro rol futuro) y especifica un rol, usarlo.
-    filter.role = req.query.role;
-  }
+    // Si es recepcionista, solo puede ver clientes
+    if (req.user.role === 'Recepcionista') {
+      filter.role = 'Cliente';
+    } else if (role) {
+      filter.role = role;
+    }
 
     const users = await User.findAll({
       where: filter,
-      attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'isActive'],
+      attributes: ['id', 'firstName', 'lastName', 'email', 'role', 'isActive', 'createdAt'],
       order: [['firstName', 'ASC']],
     });
-    res.status(200).json(users);
+
+    res.status(200).json({
+      message: 'Lista de usuarios obtenida correctamente.',
+      total: users.length,
+      users,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-// [Admin] Actualizar el rol de un usuario
+//  [Admin] Actualizar el rol de un usuario
 export const updateUserRole = async (req, res, next) => {
   try {
-    const { role } = req.body;
     const { id } = req.params;
+    const { role } = req.body;
 
-    // Validar que el rol sea uno de los permitidos
     const allowedRoles = ['Admin', 'Cliente', 'Veterinario', 'Recepcionista', 'Groomer'];
     if (!allowedRoles.includes(role)) {
       return next(createError(400, 'Rol no válido.'));
     }
 
     const user = await User.findByPk(id);
-    if (!user) {
-      return next(createError(404, 'Usuario no encontrado.'));
+    if (!user) return next(createError(404, 'Usuario no encontrado.'));
+
+    // Evitar que un admin se degrade a sí mismo accidentalmente
+    if (user.id === req.user.id && role !== 'Admin') {
+      return next(createError(403, 'No puedes cambiar tu propio rol.'));
     }
 
-    user.role = role;
-    await user.save();
+    await user.update({ role });
 
     res.status(200).json({
-      message: 'Rol de usuario actualizado exitosamente.',
+      message: `Rol actualizado a "${role}" correctamente.`,
       user: {
         id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
         role: user.role,
       },
     });

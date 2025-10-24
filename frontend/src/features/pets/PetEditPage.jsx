@@ -9,16 +9,19 @@ import { useAuthStore } from '../../store/auth.store';
 
 // --- Funciones de API ---
 const fetchPetById = ({ id, token }) =>
-  apiClient.get(`/pets/${id}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data.data);
-
+    apiClient.get(`/pets/${id}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
 const updatePet = ({ id, petData, token }) =>
   apiClient.put(`/pets/${id}`, petData, { headers: { Authorization: `Bearer ${token}` } });
 
 const fetchSpecies = (token) =>
   apiClient.get('/species', { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
 
-const fetchClients = (token) =>
-  apiClient.get('/users?role=Cliente', { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
+const fetchClients = async (token) => {
+  const { data } = await apiClient.get('/users?role=Cliente', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return Array.isArray(data?.users) ? data.users : []; // 
+};
 
 export default function PetEditPage() {
   const { id } = useParams();
@@ -50,13 +53,33 @@ export default function PetEditPage() {
   
   // Rellenar el formulario cuando los datos de la mascota se cargan
   useEffect(() => {
-    if (pet) {
-      const formattedPet = {
-        ...pet,
-      };
-      reset(formattedPet);
-        }
-      }, [pet, reset]);
+        if (pet) {
+          let formattedBirthDate = pet.birthDate;
+    
+          // Verifica si birthDate existe y si es un string (formato ISO)
+          if (pet.birthDate && typeof pet.birthDate === 'string') {
+            // La fecha ISO es "YYYY-MM-DDTHH:mm:ss.sssZ". Tomamos solo la parte "YYYY-MM-DD"
+            formattedBirthDate = pet.birthDate.split('T')[0];
+          }
+          
+          // Asegurar que speciesId sea un string, ya que los valores de los select
+          // en HTML son strings, incluso si representan números
+          const speciesIdAsString = pet.speciesId ? String(pet.speciesId) : '';
+          
+          // Si usaste la Opción 2 de la respuesta anterior para el controlador getAllPets,
+          // la propiedad ownerId está directamente en pet:
+          const ownerIdAsString = pet.ownerId ? String(pet.ownerId) : '';
+    
+    
+          const formattedPet = {
+            ...pet,
+            birthDate: formattedBirthDate,
+            speciesId: speciesIdAsString,
+            ownerId: ownerIdAsString, // Esto solo se usará si el usuario es Admin/Recepcionista
+          };
+          reset(formattedPet);
+        }
+      }, [pet, reset]);
 
   // Mutación para actualizar la mascota
   const mutation = useMutation({
@@ -89,19 +112,8 @@ export default function PetEditPage() {
     <div className="container mx-auto p-4 max-w-2xl">
       <h1 className="text-2xl font-bold mb-6">Editar Mascota: {pet?.name}</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 bg-white p-6 rounded-lg shadow-md">
-        <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
-          <input
-            id="name"
-            type="text"
-            {...register('name', { required: 'El nombre es obligatorio' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          />
-          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
-        </div>
-
-        {/* Selector de Propietario (solo para Admin/Recepcionista) */}
-        {(user?.role === 'Admin' || user?.role === 'Recepcionista') && (
+          {/* Selector de Propietario (solo para Admin/Recepcionista) */}
+          {(user?.role === 'Admin' || user?.role === 'Recepcionista') && (
           <div>
             <label htmlFor="ownerId" className="block text-sm font-medium text-gray-700">Propietario</label>
             <select
@@ -118,6 +130,17 @@ export default function PetEditPage() {
             {errors.ownerId && <p className="text-red-500 text-xs mt-1">{errors.ownerId.message}</p>}
           </div>
         )}
+        
+        <div>
+          <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nombre</label>
+          <input
+            id="name"
+            type="text"
+            {...register('name', { required: 'El nombre es obligatorio' })}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          />
+          {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+        </div>
 
         {/* Resto de los campos del formulario */}
         <div>

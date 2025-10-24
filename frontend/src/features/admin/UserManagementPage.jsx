@@ -11,7 +11,9 @@ const fetchUsers = async (token) => {
   const { data } = await apiClient.get('/users', {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return data;
+  
+  // 💡 CAMBIO: Devuelve SOLO el array 'users'
+  return data.users; 
 };
 
 const updateUserRole = async ({ userId, role, token }) => {

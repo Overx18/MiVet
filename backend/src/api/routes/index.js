@@ -3,7 +3,9 @@ import { Router } from 'express';
 import authRoutes from './auth.routes.js';
 import userRoutes from './user.routes.js';
 import speciesRoutes from './species.routes.js';
-import petRoutes from './pet.routes.js'; 
+import petRoutes from './pet.routes.js';
+import serviceRoutes from './service.routes.js'; 
+import appointmentRoutes from './appointment.routes.js';
 
 const router = Router();
 
@@ -11,5 +13,7 @@ router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/species', speciesRoutes);
 router.use('/pets', petRoutes);
+router.use('/services', serviceRoutes); 
+router.use('/appointments', appointmentRoutes);
 
 export default router;

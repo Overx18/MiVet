@@ -42,15 +42,15 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-gray-100">
       <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
         <h2 className="text-2xl font-bold text-center">Iniciar Sesión</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form autoComplete="off" onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
             <label className="block text-sm font-medium">Email</label>
-            <input type="email" {...register('email', { required: 'El email es obligatorio' })} className="w-full px-3 py-2 border rounded-md" />
+            <input type="email" {...register('email', { required: 'El email es obligatorio' })} className="w-full px-3 py-2 border rounded-md" autoComplete="new-password"/>
             {errors.email && <p className="text-sm text-red-600">{errors.email.message}</p>}
           </div>
           <div>
             <label className="block text-sm font-medium">Contraseña</label>
-            <input type="password" {...register('password', { required: 'La contraseña es obligatoria' })} className="w-full px-3 py-2 border rounded-md" />
+            <input type="password" {...register('password', { required: 'La contraseña es obligatoria' })} className="w-full px-3 py-2 border rounded-md" autoComplete="new-password" />
             {errors.password && <p className="text-sm text-red-600">{errors.password.message}</p>}
           </div>
           {/* 2. Añadir el enlace de recuperación */}

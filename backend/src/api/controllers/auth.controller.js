@@ -1,32 +1,31 @@
-//Lógica para registro, login, logout
 // backend/src/api/controllers/auth.controller.js
 import { validationResult } from 'express-validator';
 import createError from 'http-errors';
-import crypto from 'crypto'; 
+import crypto from 'crypto';
 import db from '../models/index.js';
 import { generateToken } from '../../utils/jwt.js';
 import { sendEmail } from '../../utils/email.js';
 
-const User = db.User;
+const { User, Sequelize } = db;
 
-//Registro
+// Registro de usuario
 export const register = async (req, res, next) => {
-  // 1. Validar los datos de entrada
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(createError(422, { errors: errors.array() }));
-  }
-
-  const { firstName, lastName, email, password, phone, address } = req.body;
-
   try {
-    // 2. Verificar si el usuario ya existe
+    // 1 Validar datos de entrada
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return next(createError(422, { errors: errors.array() }));
+    }
+
+    const { firstName, lastName, email, password, phone, address } = req.body;
+
+    // 2️ Verificar existencia del usuario
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return next(createError(409, 'El correo electrónico ya está en uso.'));
     }
 
-    // 3. Crear el nuevo usuario (el hook del modelo se encarga de hashear la contraseña)
+    // 3️ Crear usuario (el modelo maneja hash + rol por defecto)
     const newUser = await User.create({
       firstName,
       lastName,
@@ -34,56 +33,47 @@ export const register = async (req, res, next) => {
       password,
       phone,
       address,
-      // El rol por defecto 'Cliente' y 'isConfirmed: false' se aplican desde el modelo
     });
 
-    // 4. Enviar respuesta exitosa
-    // (Aquí iría la lógica para enviar el email de confirmación)
+    // 4️ Respuesta exitosa. (Aquí iría la lógica para enviar el email de confirmación)
     res.status(201).json({
       message: 'Usuario registrado exitosamente. Por favor, revisa tu correo para confirmar tu cuenta.',
-      userId: newUser.id,
+      user: {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName,
+        role: newUser.role,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
 
-//Iniciar sesion
+//  Iniciar sesión
 export const login = async (req, res, next) => {
-  // 1. Validar los datos de entrada
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(createError(422, { errors: errors.array() }));
-  }
-
-  const { email, password } = req.body;
-
   try {
-    // 2. Buscar al usuario por email
+    // 1️ Validar entrada
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return next(createError(422, { errors: errors.array() }));
+    }
+
+    const { email, password } = req.body;
+
+    // 2️ Buscar usuario
     const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return next(createError(401, 'Credenciales inválidas.'));
-    }
+    if (!user) return next(createError(401, 'Credenciales inválidas.'));
 
-    // 3. Verificar si la cuenta está confirmada
-    // if (!user.isConfirmed) {
-    //   return next(createError(403, 'Tu cuenta no ha sido confirmada. Por favor, revisa tu correo.'));
-    // }
-
-    // 4. Validar la contraseña
+    // 3️ Validar contraseña
     const isPasswordValid = await user.validatePassword(password);
-    if (!isPasswordValid) {
-      return next(createError(401, 'Credenciales inválidas.'));
-    }
+    if (!isPasswordValid) return next(createError(401, 'Credenciales inválidas.'));
 
-    // 5. Generar el token JWT
-    const tokenPayload = {
-      id: user.id,
-      role: user.role,
-    };
-    const token = generateToken(tokenPayload);
+    // 4️ Generar JWT
+    const token = generateToken({ id: user.id, role: user.role });
 
-    // 6. Enviar respuesta con el token y datos del usuario (sin contraseña)
+    // 5️ Responder con datos limpios
     res.status(200).json({
       message: 'Inicio de sesión exitoso.',
       token,
@@ -100,58 +90,66 @@ export const login = async (req, res, next) => {
   }
 };
 
-// Solicitar recuperación de contraseña
+//  Solicitar recuperación de contraseña
 export const forgotPassword = async (req, res, next) => {
   try {
-    const user = await User.findOne({ where: { email: req.body.email } });
+    const { email } = req.body;
 
+    const user = await User.findOne({ where: { email } });
     if (!user) {
-      // Para no revelar si un email existe, siempre enviamos una respuesta positiva.
-      return res.status(200).json({ message: 'Si existe una cuenta con este correo, se ha enviado un enlace para restablecer la contraseña.' });
+      // Nunca revelar si el usuario existe
+      return res.status(200).json({
+        message: 'Si existe una cuenta con este correo, se enviará un enlace para restablecer la contraseña.',
+      });
     }
 
-    // 1. Generar un token aleatorio
+    // 1️ Generar token seguro
     const resetToken = crypto.randomBytes(32).toString('hex');
 
-    // 2. Hashear el token y guardarlo en la base de datos
+    // 2️ Guardar hash del token
     user.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // Expira en 10 minutos
-
+    user.passwordResetExpires = Date.now() + 10 * 60 * 1000; // 10 minutos
     await user.save();
 
-    // 3. Crear la URL de reseteo y enviar el correo
+    // 3️ Crear URL y mensaje
     const resetURL = `${req.protocol}://${req.get('host').replace('3000', '5173')}/reset-password/${resetToken}`;
-    const message = `Recibiste este correo porque solicitaste un restablecimiento de contraseña. Por favor, haz clic en el siguiente enlace o pégalo en tu navegador para completar el proceso:\n\n${resetURL}\n\nSi no solicitaste esto, por favor ignora este correo.`;
+    const message = `
+      Hola ${user.firstName || ''},
+      Recibiste este correo porque solicitaste restablecer tu contraseña.
+      Haz clic aquí para continuar: ${resetURL}
+      Este enlace expirará en 10 minutos.
+      Si no solicitaste esto, ignora el mensaje.
+    `;
 
     await sendEmail({
       to: user.email,
-      subject: 'Restablecimiento de Contraseña - MiVet',
+      subject: 'Restablecimiento de contraseña - MiVet',
       text: message,
     });
 
-    res.status(200).json({ message: 'Se ha enviado un enlace para restablecer la contraseña a tu correo.' });
+    res.status(200).json({
+      message: 'Se ha enviado un enlace para restablecer tu contraseña.',
+    });
   } catch (error) {
-    // Limpiar token en caso de error para evitar bloqueos
-    if (req.user) {
-      req.user.passwordResetToken = null;
-      req.user.passwordResetExpires = null;
-      await req.user.save();
-    }
-    next(createError(500, 'Hubo un error al enviar el correo. Inténtalo de nuevo más tarde.'));
+    console.error(error);
+    next(createError(500, 'Error al enviar el correo. Intenta nuevamente.'));
   }
 };
 
-// Restablecer la contraseña
+//  Restablecer contraseña
 export const resetPassword = async (req, res, next) => {
   try {
-    // 1. Obtener el token hasheado para buscarlo en la BD
-    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const { token } = req.params;
+    const { password } = req.body;
 
-    // 2. Buscar usuario por token y verificar que no haya expirado
+    // 1️ Hashear token para comparar
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    // 2️ Buscar usuario válido
     const user = await User.findOne({
       where: {
         passwordResetToken: hashedToken,
-        passwordResetExpires: { [db.Sequelize.Op.gt]: Date.now() },
+        passwordResetExpires: { [Sequelize.Op.gt]: Date.now() },
       },
     });
 
@@ -159,11 +157,10 @@ export const resetPassword = async (req, res, next) => {
       return next(createError(400, 'El token es inválido o ha expirado.'));
     }
 
-    // 3. Establecer la nueva contraseña
-    user.password = req.body.password;
+    // 3️ Actualizar contraseña
+    user.password = password;
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
-    // El hook 'beforeSave' se encargará de hashear la nueva contraseña
     await user.save();
 
     res.status(200).json({ message: 'Contraseña actualizada exitosamente.' });

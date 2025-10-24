@@ -19,16 +19,17 @@ Para implementar el sistema web de gestión veterinaria utilizando Scrum en 12 s
   * **Integración (Días 6-8)**: Conectar frontend a backend para autenticación; implementar redirección basada en roles. Agregar edición de perfil con confirmación de email.  
   * **Pruebas (Día 9\)**: Pruebas unitarias para endpoints y componentes; simular emails con console.log. **Entregable**: Sistema con autenticación funcional y perfiles editables. Demo: Registro, login y logout.
 
-#### **Sprint 2: Gestión de Usuarios Avanzada y Mascotas (Semanas 3-4, Puntos: 23\)**
+#### **Sprint 2: Gestión de Usuarios Avanzada y Mascotas (Semanas 3-4, Puntos: 28\)**
 
 **Enfoque**: Completar gestión de usuarios y agregar módulo de mascotas para permitir registros básicos de clientes.
 
 **User Stories Seleccionadas**:
 
 * US-04: Recuperación de Contraseña (5 puntos)  
-* US-05: Gestión de Roles (5 puntos)  
-* US-07: Registro de Mascotas (5 puntos)  
-* US-10: Catálogo de Especies (3 puntos)  
+* US-05: Gestión de Roles (5 puntos)    
+* US-10: Catálogo de Especies (3 puntos) 
+* US-07: Registro de Mascotas (5 puntos) 
+* US-08: Listado y Búsqueda de Mascotas (5 puntos)
 * US-09: Edición y Eliminación de Mascotas (3 puntos) **Tareas Detalladas**:  
   * **Backend (Días 2-5)**: Implementar endpoints para recuperación de contraseña (enlace temporal). Agregar gestión de roles con autorización basada en JWT. Crear modelos para Mascotas y Especies; endpoints CRUD para ambos.  
   * **Frontend (Días 2-5)**: Formularios para recuperación de contraseña y gestión de roles (solo para Admin). Interfaz para registro/edición de mascotas con selección de especies.  
@@ -82,7 +83,7 @@ Para implementar el sistema web de gestión veterinaria utilizando Scrum en 12 s
   * **Integración (Días 6-8)**: Vincular historial a citas e inventario.  
   * **Pruebas (Día 9\)**: Verificar filtros en reportes y vistas por rol. **Entregable**: Dashboards funcionales y reportes generados. Demo: Ver dashboard de Veterinario y generar reporte.
 
-#### **Sprint 6: Configuración, Páginas Principales y Pulido Final (Semanas 11-12, Puntos: 17\)**
+#### **Sprint 6: Configuración, Páginas Principales y Pulido Final (Semanas 11-12, Puntos: 12\)**
 
 **Enfoque**: Finalizar con configuración, páginas públicas y pruebas integrales para un sistema completo.
 
@@ -90,8 +91,7 @@ Para implementar el sistema web de gestión veterinaria utilizando Scrum en 12 s
 
 * US-25: Configuración General (3 puntos)  
 * US-26: Página Home (3 puntos)  
-* US-27: Página Not Found (404) (2 puntos)  
-* US-08: Listado y Búsqueda de Mascotas (5 puntos) // Movida aquí por dependencia con mascotas completas  
+* US-27: Página Not Found (404) (2 puntos)    
 * US-30: Pruebas y Despliegue Local (5 puntos) **Tareas Detalladas**:  
   * **Backend (Días 2-5)**: Endpoints para configuración (horarios, precios). Ajustes finales de seguridad.  
   * **Frontend (Días 2-5)**: Página Home con carrusel y formulario; página 404\. Lista de mascotas con búsqueda.  

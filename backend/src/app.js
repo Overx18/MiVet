@@ -6,6 +6,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config/index.js';
 import db from './api/models/index.js';
+import { startReminderJob } from './services/cron.service.js'; // Importar el servicio
 
 import apiRoutes from './api/routes/index.js';
 // Y un manejador de errores centralizado
@@ -46,6 +47,9 @@ const startServer = async () => {
     // Inicia el servidor Express
     app.listen(config.port, () => {
       console.log(`Servidor escuchando en http://localhost:${config.port}`);
+
+      // Iniciar el cron job después de que el servidor esté listo
+      startReminderJob();
     });
   } catch (error) {
     console.error('No se pudo conectar a la base de datos:', error);

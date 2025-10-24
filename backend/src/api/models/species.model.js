@@ -13,17 +13,17 @@ export default (sequelize) => {
       primaryKey: true,
     },
     name: {
-      type: DataTypes.STRING,
+      type: DataTypes.STRING(100),
       allowNull: false,
       unique: true,
     },
     description: {
       type: DataTypes.TEXT,
+      allowNull: true,
     },
   }, {
     sequelize,
     modelName: 'Species',
-    timestamps: false, // No necesita createdAt/updatedAt
   });
 
   return Species;

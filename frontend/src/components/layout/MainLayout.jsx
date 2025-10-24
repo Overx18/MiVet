@@ -22,22 +22,22 @@ export default function MainLayout() {
                 <>
                   {/* Enlace para registrar mascota (Visible para Cliente o Recepcionista) */}
                   {(user?.role === 'Cliente' || user?.role === 'Recepcionista') && (
-                    <Link to="/pets/register" className="text-gray-700 hover:text-blue-600">
-                      Registrar Mascota
-                    </Link>
+                    <>
+                      <Link to="/pets/register" className="text-gray-700 hover:text-blue-600">Registrar Mascota</Link>
+                      <Link to="/appointments/new" className="text-gray-700 hover:text-blue-600">Programar Cita</Link>
+                    </>
                   )}
 
                   {/* Enlace a Gestión de Usuarios solo para Admin */}
                   {user?.role === 'Admin' && (
-                  <>
-                    <Link to="/admin/users" className="text-gray-700 hover:text-blue-600">
-                      Gestionar Usuarios
-                    </Link>
-                    <Link to="/admin/species" className="text-gray-700 hover:text-blue-600">
-                      Gestionar Especies
-                    </Link>
-                  </>
-                )} 
+                    <>
+                      <Link to="/admin/users" className="text-gray-700 hover:text-blue-600">Usuarios</Link>
+                      <Link to="/admin/species" className="text-gray-700 hover:text-blue-600">Especies</Link>
+                      {/* Nuevo enlace para gestionar servicios */}
+                      <Link to="/admin/services" className="text-gray-700 hover:text-blue-600">Servicios</Link>
+                    </>
+                )}
+                  <Link to="/appointments/calendar" className="text-gray-700 hover:text-blue-600">Calendario</Link> 
                   <Link to="/pets" className="text-gray-700 hover:text-blue-600">Mascotas</Link>
                   {/* Añadir enlace al perfil */}
                   <Link to="/profile" className="text-gray-700 hover:text-blue-600">

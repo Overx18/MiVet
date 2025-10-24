@@ -19,6 +19,9 @@ import SpeciesManagementPage from './features/admin/SpeciesManagementPage.jsx';
 import PetRegistrationPage from './features/pets/PetRegistrationPage.jsx';
 import PetListPage from './features/pets/PetListPage.jsx';
 import PetEditPage from './features/pets/PetEditPage.jsx';
+import ServiceManagementPage from './features/admin/ServiceManagementPage.jsx';
+import AppointmentSchedulerPage from './features/appointments/AppointmentSchedulerPage.jsx';
+import AppointmentsCalendarPage from './features/appointments/AppointmentsCalendarPage.jsx';
 
 const queryClient = new QueryClient();
 
@@ -42,13 +45,20 @@ function App() {
               <Route path="/pets" element={<PetListPage />} />
               <Route path="/pets/register" element={<PetRegistrationPage />} />
               <Route path="/pets/:id/edit" element={<PetEditPage />} />
+              <Route path="/appointments/new" element={<AppointmentSchedulerPage />} />
+              <Route path="/appointments/calendar" element={<AppointmentsCalendarPage />} />
             </Route>
 
             {/* Rutas protegidas solo para Administradores */}
             <Route element={<AdminRoute />}>
               <Route path="/admin/users" element={<UserManagementPage />} />
               <Route path="/admin/species" element={<SpeciesManagementPage />} />
+              <Route path="/admin/services" element={<ServiceManagementPage />} /> 
             </Route>
+
+              <Route path="/appointments/new" element={<ProtectedRoute roles={['Cliente', 'Recepcionista']}><AppointmentSchedulerPage /></ProtectedRoute>} />
+
+            
           </Route>
         </Routes>
       </BrowserRouter>

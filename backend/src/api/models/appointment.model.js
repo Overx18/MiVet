@@ -17,11 +17,17 @@ export default (sequelize) => {
       allowNull: false,
     },
     status: {
-      type: DataTypes.ENUM('Programada', 'Confirmada', 'Cancelada', 'Completada', 'Pagada'),
-      defaultValue: 'Programada',
+      type: DataTypes.ENUM('Pagada', 'Completada', 'Cancelada'),
+      defaultValue: 'Pagada',
+      allowNull: false,
     },
     totalPrice: {
       type: DataTypes.DECIMAL(10, 2),
+    },
+    reminderSent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+      allowNull: false,
     },
   }, {
     sequelize,

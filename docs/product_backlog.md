@@ -102,7 +102,7 @@
   **Descripción**: Como Cliente o Recepcionista, quiero programar citas para servicios veterinarios o de grooming.  
   **Criterios de Aceptación**:
 
-  * Formulario para seleccionar mascota, servicio, fecha/hora, profesional.  
+  * Formulario para seleccionar mascota, servicio, fecha/hora, profesional(se filtra veterinarios o groomers).  
   * Validación de disponibilidad en tiempo real.  
   * Confirmación de cita con resumen.  
     **Prioridad**: Alta  

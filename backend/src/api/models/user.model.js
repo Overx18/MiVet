@@ -55,6 +55,10 @@ export default (sequelize) => {
       defaultValue: 'Cliente',
       allowNull: false,
     },
+   // workingHours: {
+    //  type: DataTypes.JSON, // Campo para almacenar el horario laboral
+    //  allowNull: true, // Solo los profesionales lo tendrán
+    //},
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,

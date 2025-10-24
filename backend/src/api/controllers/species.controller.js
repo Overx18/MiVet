@@ -2,23 +2,34 @@
 import createError from 'http-errors';
 import db from '../models/index.js';
 
-const Species = db.Species;
+const { Species } = db;
 
-// [Admin] Crear una nueva especie
+//  [Admin] Crear una nueva especie
 export const createSpecies = async (req, res, next) => {
   try {
     const { name, description } = req.body;
-    if (!name) {
+
+    // Validación básica
+    if (!name?.trim()) {
       return next(createError(400, 'El nombre de la especie es obligatorio.'));
     }
 
-    const newSpecies = await Species.create({ name, description });
-    res.status(201).json(newSpecies);
-  } catch (error) {
-    // Manejar error de unicidad
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      return next(createError(409, 'La especie ya existe.'));
+    // Verificar si ya existe una especie con ese nombre
+    const existing = await Species.findOne({ where: { name } });
+    if (existing) {
+      return next(createError(409, 'Ya existe una especie con ese nombre.'));
     }
+
+    const newSpecies = await Species.create({
+      name: name.trim(),
+      description: description?.trim() || '',
+    });
+
+    res.status(201).json({
+      message: 'Especie creada exitosamente.',
+      species: newSpecies,
+    });
+  } catch (error) {
     next(error);
   }
 };
@@ -26,7 +37,11 @@ export const createSpecies = async (req, res, next) => {
 // [Todos los autenticados] Obtener todas las especies
 export const getAllSpecies = async (req, res, next) => {
   try {
-    const species = await Species.findAll({ order: [['name', 'ASC']] });
+    const species = await Species.findAll({
+      order: [['name', 'ASC']],
+      attributes: ['id', 'name', 'description'],
+    });
+
     res.status(200).json(species);
   } catch (error) {
     next(error);
@@ -40,15 +55,20 @@ export const updateSpecies = async (req, res, next) => {
     const { name, description } = req.body;
 
     const species = await Species.findByPk(id);
-    if (!species) {
-      return next(createError(404, 'Especie no encontrada.'));
+    if (!species) return next(createError(404, 'Especie no encontrada.'));
+
+    // Si se cambia el nombre, verificar duplicado
+    if (name && name.trim() !== species.name) {
+      const duplicate = await Species.findOne({ where: { name: name.trim() } });
+      if (duplicate) return next(createError(409, 'Ya existe otra especie con ese nombre.'));
     }
 
-    species.name = name || species.name;
-    species.description = description || species.description;
-    await species.save();
+    await species.update(req.body);
 
-    res.status(200).json(species);
+    res.status(200).json({
+      message: 'Especie actualizada exitosamente.',
+      species,
+    });
   } catch (error) {
     next(error);
   }
@@ -58,13 +78,15 @@ export const updateSpecies = async (req, res, next) => {
 export const deleteSpecies = async (req, res, next) => {
   try {
     const { id } = req.params;
+
     const species = await Species.findByPk(id);
-    if (!species) {
-      return next(createError(404, 'Especie no encontrada.'));
-    }
+    if (!species) return next(createError(404, 'Especie no encontrada.'));
 
     await species.destroy();
-    res.status(204).send(); // 204 No Content
+
+    res.status(200).json({
+      message: `La especie "${species.name}" fue eliminada correctamente.`,
+    });
   } catch (error) {
     next(error);
   }
