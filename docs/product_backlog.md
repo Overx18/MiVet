@@ -129,7 +129,7 @@
   **Descripción**: Como Cliente o Recepcionista, quiero pagar citas para confirmarlas.  
   **Criterios de Aceptación**:
 
-  * Integración de pago simulado (o Stripe mock).  
+  * Integración de pago con Stripe 
   * Soporte para tarjeta/transferencia; recibo digital generado.  
   * Actualización de estado a "Pagada".  
     **Prioridad**: Alta  

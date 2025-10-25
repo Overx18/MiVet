@@ -53,7 +53,7 @@ export const getAllUsers = async (req, res, next) => {
     const filter = {};
 
     // Si es recepcionista, solo puede ver clientes
-    if (req.user.role === 'Recepcionista') {
+    if (req.user.role === 'Recepcionista' ) {
       filter.role = 'Cliente';
     } else if (role) {
       filter.role = role;
@@ -66,6 +66,7 @@ export const getAllUsers = async (req, res, next) => {
     });
 
     res.status(200).json({
+      status: 'success',
       message: 'Lista de usuarios obtenida correctamente.',
       total: users.length,
       users,

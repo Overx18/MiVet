@@ -17,7 +17,7 @@ router.route('/profile').get(getProfile).put(updateProfile);
 const adminOnly = authorize('Admin');
 
 // GET /api/users -> Listar todos los usuarios
-router.route('/').get(authorize('Admin', 'Recepcionista'), getAllUsers);
+router.get('/', authorize('Admin', 'Recepcionista'), getAllUsers);
 
 // PUT /api/users/:id/role -> Actualizar el rol de un usuario
 router.put('/:id/role', adminOnly, updateUserRole);

@@ -1,7 +1,7 @@
 //Rutas para /api/appointments
 // backend/src/api/routes/appointment.routes.js
 import { Router } from 'express';
-import { createAppointment, getProfessionalsByServiceType, getAvailableSlots, getAppointments, rescheduleAppointment } from '../controllers/appointment.controller.js';
+import { createAppointment, getProfessionalsByServiceType, getAvailableSlots, getAppointments, rescheduleAppointment, cancelAppointment } from '../controllers/appointment.controller.js';
 import { protect } from '../../middlewares/auth.middleware.js';
 import { authorize } from '../../middlewares/role.middleware.js';
 
@@ -23,6 +23,9 @@ router.get('/professionals', getProfessionalsByServiceType);
 router.post('/', authorize('Cliente', 'Recepcionista'), createAppointment);
 
 // PATCH /api/appointments/:id/reschedule -> Reprogramar cita
-router.patch('/:id/reschedule', authorize('Recepcionista', 'Admin'), rescheduleAppointment);
+router.patch('/:id/reschedule', authorize('Recepcionista', 'Admin', 'Cliente'), rescheduleAppointment);
+
+// PATCH /api/appointments/:id/cancel -> Cancelar una cita
+router.patch('/:id/cancel', cancelAppointment);
 
 export default router;

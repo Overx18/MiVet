@@ -3,6 +3,7 @@
 import createError from 'http-errors';
 import { Op } from 'sequelize';
 import db from '../models/index.js';
+import { sendEmail } from '../../utils/email.js';
 
 const Appointment = db.Appointment;
 const Service = db.Service;
@@ -167,19 +168,31 @@ export const getAvailableSlots = async (req, res, next) => {
 // [Todos los autenticados] Obtener citas para el calendario
 export const getAppointments = async (req, res, next) => {
   try {
-    const { start, end } = req.query; // Fechas en formato ISO
+    const { start, end, professionalId, serviceId, petId } = req.query;
+    const user = req.user;
+
     if (!start || !end) {
-      return next(createError(400, 'Se requieren fechas de inicio y fin.'));
+      return next(createError(400, 'Se requiere un rango de fechas (start, end).'));
     }
 
+    // Inicializar whereClause
     const whereClause = {
       dateTime: { [Op.between]: [new Date(start), new Date(end)] },
       status: { [Op.ne]: 'Cancelada' },
     };
 
-    // Filtrar por rol
-    if (['Veterinario', 'Groomer'].includes(req.user.role)) {
-      whereClause.professionalId = req.user.id;
+    // Filtros opcionales
+    if (professionalId) whereClause.professionalId = professionalId;
+    if (serviceId) whereClause.serviceId = serviceId;
+    if (petId) whereClause.petId = petId;
+
+    // Lógica de autorización
+    if (user.role === 'Cliente') {
+      const userPets = await Pet.findAll({ where: { ownerId: user.id }, attributes: ['id'] });
+      const petIds = userPets.map(p => p.id);
+      whereClause.petId = { [Op.in]: petIds };
+    } else if (['Veterinario', 'Groomer'].includes(user.role)) {
+      whereClause.professionalId = user.id;
     }
 
     const appointments = await Appointment.findAll({
@@ -189,53 +202,149 @@ export const getAppointments = async (req, res, next) => {
         { model: Service, as: 'service', attributes: ['name', 'duration', 'type'] },
         { model: User, as: 'professional', attributes: ['id', 'firstName', 'lastName'] },
       ],
+      order: [['dateTime', 'ASC']],
     });
 
-    // Si es un cliente, filtrar para que solo vea las citas de sus mascotas
-    if (req.user.role === 'Cliente') {
-      const clientAppointments = appointments.filter(app => app.pet?.ownerId === req.user.id);
-      return res.status(200).json(clientAppointments);
-    }
-
     res.status(200).json(appointments);
-    console.log('>>> Fechas recibidas:', req.query);
   } catch (error) {
     next(error);
   }
 };
 
-// [Recepcionista, Admin] Reprogramar una cita (drag & drop)
+// [Recepcionista, Admin, Cliente (con límite de tiempo)] Reprogramar una cita
 export const rescheduleAppointment = async (req, res, next) => {
+    try {
+      const { id } = req.params;
+      const { newDateTime } = req.body;
+      const requester = req.user; // Obtener el usuario autenticado
+  
+      const appointment = await Appointment.findByPk(id, { 
+        include: [
+          { model: db.Service, as: 'service' },
+          { model: db.Pet, as: 'pet' },
+        ]
+      });
+      
+  
+      if (!appointment) {
+        return next(createError(404, 'Cita no encontrada.'));
+      }
+  
+      // 1. Validar Permisos y Rol
+      const isOwner = requester.role === 'Cliente' && appointment.pet.ownerId === requester.id;
+      const isAdminOrReceptionist = ['Admin', 'Recepcionista'].includes(requester.role);
+  
+      if (!isOwner && !isAdminOrReceptionist) {
+        return next(createError(403, 'No tienes permiso para reprogramar esta cita.'));
+      }
+      
+      // Solo permitir reprogramar citas 'Pagada'
+      if (appointment.status !== 'Pagada') {
+          return next(createError(400, `Solo se pueden reprogramar citas con estado 'Programada'.`));
+      }
+  
+  
+      // 2. Lógica de Reprogramación < 24 horas (Solo aplica para el cliente, no para Admin/Recepcionista)
+      if (isOwner) {
+        const hoursUntilAppointment = (new Date(appointment.dateTime) - new Date()) / (1000 * 60 * 60);
+        if (hoursUntilAppointment < 24) {
+          return next(createError(403, 'No se puede reprogramar la cita, ya que es en menos de 4 horas.'));
+        }
+      }
+  
+      // 3. Reutilizar la lógica de validación de disponibilidad
+      const appointmentStart = new Date(newDateTime);
+      const appointmentEnd = new Date(appointmentStart.getTime() + appointment.service.duration * 60000);
+  
+      const conflicting = await Appointment.findOne({
+        where: {
+          id: { [Op.ne]: id }, // Excluir la cita actual
+          professionalId: appointment.professionalId,
+          status: { [Op.ne]: 'Cancelada' },
+          dateTime: { [Op.lt]: appointmentEnd, [Op.gt]: new Date(appointmentStart.getTime() - 1 * 60000) },
+        },
+      });
+  
+      if (conflicting) {
+        return next(createError(409, 'El nuevo horario no está disponible.'));
+      }
+  
+      // 4. Reprogramar y guardar
+      appointment.dateTime = appointmentStart;
+      await appointment.save();
+  
+      res.status(200).json({ 
+          message: 'Cita reprogramada exitosamente.',
+          appointment 
+      });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+// [Todos los autenticados] Cancelar una cita
+export const cancelAppointment = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { newDateTime } = req.body;
+    const requester = req.user;
 
-    const appointment = await Appointment.findByPk(id, { include: [Service] });
+    const appointment = await Appointment.findByPk(id, {
+      include: [
+        { model: Pet, as: 'pet', include: [{ model: User, as: 'owner' }] },
+        { model: User, as: 'professional' },
+        { model: Service, as: 'service' },
+      ],
+    });
+
     if (!appointment) {
       return next(createError(404, 'Cita no encontrada.'));
     }
 
-    // Reutilizar la lógica de validación de disponibilidad
-    const appointmentStart = new Date(newDateTime);
-    const appointmentEnd = new Date(appointmentStart.getTime() + appointment.Service.duration * 60000);
+    // 1. Validar permisos
+    const isOwner = requester.role === 'Cliente' && appointment.pet.ownerId === requester.id;
+    const isProfessional = ['Veterinario', 'Groomer'].includes(requester.role) && appointment.professionalId === requester.id;
+    const isAdminOrReceptionist = ['Admin', 'Recepcionista'].includes(requester.role);
 
-    const conflicting = await Appointment.findOne({
-      where: {
-        id: { [Op.ne]: id }, // Excluir la cita actual
-        professionalId: appointment.professionalId,
-        status: { [Op.ne]: 'Cancelada' },
-        dateTime: { [Op.lt]: appointmentEnd, [Op.gt]: new Date(appointmentStart.getTime() - 1 * 60000) },
-      },
-    });
-
-    if (conflicting) {
-      return next(createError(409, 'El nuevo horario no está disponible.'));
+    if (!isOwner && !isProfessional && !isAdminOrReceptionist) {
+      return next(createError(403, 'No tienes permiso para cancelar esta cita.'));
     }
 
-    appointment.dateTime = appointmentStart;
+    // 2. Lógica de cancelación < 24 horas
+    const hoursUntilAppointment = (new Date(appointment.dateTime) - new Date()) / (1000 * 60 * 60);
+    
+    if (hoursUntilAppointment < 24 && !isOwner) {
+      // Aquí se podría notificar a los clientes
+      return res.status(200).json({
+        message: 'No se puede cancelar la cita, ya que es en menos de 4 horas despues del pago.',
+        appointment,
+      });
+    }
+
+    // 3. Cancelación directa
+    appointment.status = 'Cancelada';
     await appointment.save();
 
-    res.status(200).json(appointment);
+    // 4. Enviar notificaciones por email
+    const clientEmail = appointment.pet.owner.email;
+    const professionalEmail = appointment.professional.email;
+    const formattedDate = new Date(appointment.dateTime).toLocaleString('es-ES');
+
+    // Email para el cliente
+    await sendEmail({
+      to: clientEmail,
+      subject: `Cita Cancelada: ${appointment.service.name} para ${appointment.pet.name}`,
+      text: `Hola ${appointment.pet.owner.firstName},\n\nTe informamos que tu cita para ${appointment.pet.name} el día ${formattedDate} ha sido cancelada.\n\nSaludos,\nEl equipo de MiVet.`,
+    });
+
+    // Email para el profesional
+    await sendEmail({
+      to: professionalEmail,
+      subject: `Cita Cancelada: ${appointment.service.name}`,
+      text: `Hola ${appointment.professional.firstName},\n\nLa cita para ${appointment.pet.name} el día ${formattedDate} ha sido cancelada.\n\nSaludos.`,
+    });
+
+    res.status(200).json({ message: 'Cita cancelada exitosamente.' });
+
   } catch (error) {
     next(error);
   }

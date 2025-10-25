@@ -55,19 +55,25 @@ export const updatePet = async (req, res, next) => {
 
     if (!pet) return next(createError(404, 'Mascota no encontrada.'));
 
-    // El cliente solo puede editar sus propias mascotas
-    if (req.user.role === 'Cliente' && pet.ownerId !== req.user.id) {
-      return next(createError(403, 'No tienes permiso para editar esta mascota.'));
+    // Si el usuario es Cliente, solo ve sus mascotas
+    if (req.user.role === 'Cliente') {
+      whereClause.ownerId = req.user.id;
+      includeClause[0].where = {};
+    } 
+    // Si el usuario es Admin o Recepcionista y envía ownerId, filtra por ese propietario
+    else if ((req.user.role === 'Admin' || req.user.role === 'Recepcionista') && req.query.ownerId) {
+      whereClause.ownerId = req.query.ownerId;
+      includeClause[0].where = {}; // Limpia cualquier filtro por nombre para evitar conflicto
     }
 
-    const { name, speciesId, race, age, weight, gender, birthDate, notes } = req.body;
-    await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes });
+        const { name, speciesId, race, age, weight, gender, birthDate, notes } = req.body;
+        await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes });
 
-    res.status(200).json(pet);
-  } catch (error) {
-    next(error);
-  }
-};
+        res.status(200).json(pet);
+      } catch (error) {
+        next(error);
+      }
+    };
 
 // [Cliente, Recepcionista, Veterinario] Eliminar una mascota (borrado lógico)
 export const deletePet = async (req, res, next) => {
@@ -93,53 +99,52 @@ export const deletePet = async (req, res, next) => {
 // [Todos los autenticados] Obtener lista de mascotas con filtros, paginación y ordenamiento
 export const getAllPets = async (req, res, next) => {
   try {
-    const { page = 1, limit = 10, ownerName, petName, speciesId, race } = req.query;
+    const { page = 1, limit = 100, ownerId, ownerName, petName, speciesId, race } = req.query;
     const offset = (page - 1) * limit;
 
+    // Filtro base
     const whereClause = { isActive: true };
-    const includeClause = [
-      {
-        model: User,
-        as: 'owner',
-        attributes: ['id', 'firstName', 'lastName'],
-        where: {}, // Objeto where inicial para el dueño
-      },
-      {
-        model: Species,
-        as: 'species',
-        attributes: ['id', 'name'],
-      },
-    ];
 
     if (petName) whereClause.name = { [Op.like]: `%${petName}%` };
     if (speciesId) whereClause.speciesId = speciesId;
     if (race) whereClause.race = { [Op.like]: `%${race}%` };
 
-// 1. Aplicar filtro de búsqueda si ownerName NO está vacío
-    if (ownerName && ownerName.trim().length > 0) { // <-- Se revisa que tenga contenido real
-        includeClause[0].where = {
-          [Op.or]: [
-            { firstName: { [Op.like]: `%${ownerName.trim()}%` } },
-            { lastName: { [Op.like]: `%${ownerName.trim()}%` } },
-          ],
-        };
-      }
-  
-      // 2. Si el usuario autenticado es Cliente, sobrescribir con su ID
-      if (req.user.role === 'Cliente') {
-        whereClause.ownerId = req.user.id;
-        // NO agregamos un filtro de nombre del dueño aquí, ya que solo debe ver las suyas.
-        // Además, podemos limpiar el where de la inclusión del User para que no filtre a todos los Users,
-        // ya que el filtro de ownerId ya hace el trabajo.
-        includeClause[0].where = {}; 
-      }
+    // Filtro por propietario
+    if (req.user.role === 'Cliente') {
+      // Cliente solo ve sus mascotas
+      whereClause.ownerId = req.user.id;
+    } else if (ownerId) {
+      // Admin/Recepcionista filtran por ownerId
+      whereClause.ownerId = ownerId;
+    }
+
+    // Filtro por nombre del propietario (opcional)
+    const ownerWhere = {};
+    if (ownerName && ownerName.trim()) {
+      ownerWhere[Op.or] = [
+        { firstName: { [Op.like]: `%${ownerName.trim()}%` } },
+        { lastName: { [Op.like]: `%${ownerName.trim()}%` } },
+      ];
+    }
 
     const { count, rows } = await Pet.findAndCountAll({
       where: whereClause,
-      include: includeClause,
+      include: [
+        {
+          model: db.User,
+          as: 'owner',
+          attributes: ['id', 'firstName', 'lastName'],
+          where: ownerWhere, // aplica filtro por nombre si existe
+        },
+        {
+          model: db.Species,
+          as: 'species', // IMPORTANTE: debe coincidir con el alias de la asociación
+          attributes: ['id', 'name'],
+        },
+      ],
+      order: [['createdAt', 'DESC']],
       limit: parseInt(limit),
       offset: parseInt(offset),
-      order: [['createdAt', 'DESC']],
       distinct: true,
     });
 
@@ -154,6 +159,7 @@ export const getAllPets = async (req, res, next) => {
     next(error);
   }
 };
+
 
 // [Todos los autenticados] Obtener una mascota por ID
 export const getPet = async (req, res, next) => {

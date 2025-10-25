@@ -16,6 +16,10 @@ export default (sequelize) => {
       type: DataTypes.DATE,
       allowNull: false,
     },
+    newDateTime: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     status: {
       type: DataTypes.ENUM('Pagada', 'Completada', 'Cancelada'),
       defaultValue: 'Pagada',
@@ -28,6 +32,10 @@ export default (sequelize) => {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
       allowNull: false,
+    },
+    paymentIntentId: {
+      type: DataTypes.STRING,
+      allowNull: true, // Puede ser nulo si la cita no requiere pago
     },
   }, {
     sequelize,

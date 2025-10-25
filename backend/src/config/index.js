@@ -23,4 +23,9 @@ export const config = {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
+  stripe: {
+    secretKey: process.env.STRIPE_SECRET_KEY,
+    webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
+  },
 };

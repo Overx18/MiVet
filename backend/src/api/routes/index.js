@@ -6,6 +6,7 @@ import speciesRoutes from './species.routes.js';
 import petRoutes from './pet.routes.js';
 import serviceRoutes from './service.routes.js'; 
 import appointmentRoutes from './appointment.routes.js';
+import paymentRoutes from './payment.routes.js';
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use('/species', speciesRoutes);
 router.use('/pets', petRoutes);
 router.use('/services', serviceRoutes); 
 router.use('/appointments', appointmentRoutes);
+router.use('/payments', paymentRoutes);
 
 export default router;

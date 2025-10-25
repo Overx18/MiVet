@@ -9,7 +9,7 @@ import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import HomePage from './pages/HomePage.jsx';
 import RegisterPage from './features/auth/RegisterPage.jsx';
 import LoginPage from './features/auth/LoginPage.jsx';
-import DashboardPage from './features/dashboard/DashboardPage.jsx'; // Importar Dashboard
+import DashboardPage from './features/dashboard/DashboardPage.jsx'; 
 import ProfilePage from './features/auth/ProfilePage.jsx';
 import ForgotPasswordPage from './features/auth/ForgotPasswordPage.jsx';
 import ResetPasswordPage from './features/auth/ResetPasswordPage.jsx';
@@ -22,6 +22,9 @@ import PetEditPage from './features/pets/PetEditPage.jsx';
 import ServiceManagementPage from './features/admin/ServiceManagementPage.jsx';
 import AppointmentSchedulerPage from './features/appointments/AppointmentSchedulerPage.jsx';
 import AppointmentsCalendarPage from './features/appointments/AppointmentsCalendarPage.jsx';
+import PaymentPage from './features/payments/PaymentPage.jsx';
+import PaymentSuccess from './features/payments/PaymentSuccess.jsx';
+import PayAppointmentPage from './features/payments/PayAppointmentPAge.jsx'; 
 
 const queryClient = new QueryClient();
 
@@ -47,6 +50,9 @@ function App() {
               <Route path="/pets/:id/edit" element={<PetEditPage />} />
               <Route path="/appointments/new" element={<AppointmentSchedulerPage />} />
               <Route path="/appointments/calendar" element={<AppointmentsCalendarPage />} />
+              <Route path="/pay/:appointmentId" element={<PaymentPage />} />
+              <Route path="/pay-appointment" element={<PayAppointmentPage />} /> 
+              <Route path="/payment-success" element={<PaymentSuccess />} />
             </Route>
 
             {/* Rutas protegidas solo para Administradores */}
@@ -55,10 +61,7 @@ function App() {
               <Route path="/admin/species" element={<SpeciesManagementPage />} />
               <Route path="/admin/services" element={<ServiceManagementPage />} /> 
             </Route>
-
-              <Route path="/appointments/new" element={<ProtectedRoute roles={['Cliente', 'Recepcionista']}><AppointmentSchedulerPage /></ProtectedRoute>} />
-
-            
+                        
           </Route>
         </Routes>
       </BrowserRouter>
