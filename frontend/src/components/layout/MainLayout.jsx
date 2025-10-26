@@ -33,13 +33,22 @@ export default function MainLayout() {
                     <>
                       <Link to="/admin/users" className="text-gray-700 hover:text-blue-600">Usuarios</Link>
                       <Link to="/admin/species" className="text-gray-700 hover:text-blue-600">Especies</Link>
-                      {/* Nuevo enlace para gestionar servicios */}
                       <Link to="/admin/services" className="text-gray-700 hover:text-blue-600">Servicios</Link>
                     </>
-                )}
+                  )}
+                  {(user?.role === 'Admin' || user?.role === 'Recepcionista') && (
+                    <>
+                    <Link to="/inventory/products/new" className="text-gray-700 hover:text-blue-600">Registrar Producto</Link>
+                    <Link to="/pos" className="px-4 py-2 font-bold text-white bg-purple-600 rounded-md hover:bg-purple-700">Punto de Venta</Link>
+                    </>
+                  )}
+                  {(user?.role === 'Admin' || user?.role === 'Recepcionista' ||  user?.role === 'Veterinario') && (
+                    <>
+                    <Link to="/inventory" className="text-gray-700 hover:text-blue-600">Inventario</Link>
+                    </>
+                  )}
                   <Link to="/appointments/calendar" className="text-gray-700 hover:text-blue-600">Calendario</Link> 
                   <Link to="/pets" className="text-gray-700 hover:text-blue-600">Mascotas</Link>
-                  {/* Añadir enlace al perfil */}
                   <Link to="/profile" className="text-gray-700 hover:text-blue-600">
                     Hola, {user?.firstName}
                   </Link>

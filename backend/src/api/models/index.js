@@ -9,6 +9,9 @@ import ServiceModel from './service.model.js';
 import AppointmentModel from './appointment.model.js';
 import ProductModel from './product.model.js';
 import MedicalRecordModel from './medicalRecord.model.js';
+import StockTransactionModel from './stockTransaction.model.js';
+import SaleModel from './sale.model.js';
+import SaleDetailModel from './saleDetail.model.js';
 
 const db = {};
 
@@ -23,6 +26,9 @@ db.Service = ServiceModel(sequelize);
 db.Appointment = AppointmentModel(sequelize);
 db.Product = ProductModel(sequelize);
 db.MedicalRecord = MedicalRecordModel(sequelize);
+db.StockTransaction = StockTransactionModel(sequelize);
+db.Sale = SaleModel(sequelize);
+db.SaleDetail = SaleDetailModel(sequelize);
 
 // Definición de Asociaciones
 
@@ -50,5 +56,28 @@ db.Appointment.belongsTo(db.User, { foreignKey: 'professionalId', as: 'professio
 db.Appointment.hasOne(db.MedicalRecord, { foreignKey: 'appointmentId', as: 'medicalRecord' });
 db.MedicalRecord.belongsTo(db.Appointment, { foreignKey: 'appointmentId', as: 'appointment' });
 
+// Producto tiene muchas Transacciones de Stock
+db.Product.hasMany(db.StockTransaction, { foreignKey: 'productId', as: 'stockTransactions' });
+db.StockTransaction.belongsTo(db.Product, { foreignKey: 'productId', as: 'product' });
+
+// Usuario (quien realiza la transacción) tiene muchas Transacciones
+db.User.hasMany(db.StockTransaction, { foreignKey: 'userId', as: 'stockTransactions' });
+db.StockTransaction.belongsTo(db.User, { foreignKey: 'userId', as: 'user' });
+
+// Venta pertenece a un Cliente (User) y a un Vendedor (User)
+db.User.hasMany(db.Sale, { foreignKey: 'clientId', as: 'clientSales' });
+db.Sale.belongsTo(db.User, { foreignKey: 'clientId', as: 'client' });
+db.User.hasMany(db.Sale, { foreignKey: 'sellerId', as: 'sellerSales' });
+db.Sale.belongsTo(db.User, { foreignKey: 'sellerId', as: 'seller' });
+
+// Venta tiene muchos Detalles de Venta
+db.Sale.hasMany(db.SaleDetail, { foreignKey: 'saleId', as: 'details' });
+db.SaleDetail.belongsTo(db.Sale, { foreignKey: 'saleId', as: 'sale' });
+
+// Detalle de Venta puede ser un Producto o un Servicio
+db.Product.hasMany(db.SaleDetail, { foreignKey: 'productId' });
+db.SaleDetail.belongsTo(db.Product, { foreignKey: 'productId' });
+db.Service.hasMany(db.SaleDetail, { foreignKey: 'serviceId' });
+db.SaleDetail.belongsTo(db.Service, { foreignKey: 'serviceId' });
 
 export default db;

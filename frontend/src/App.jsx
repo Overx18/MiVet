@@ -25,6 +25,9 @@ import AppointmentsCalendarPage from './features/appointments/AppointmentsCalend
 import PaymentPage from './features/payments/PaymentPage.jsx';
 import PaymentSuccess from './features/payments/PaymentSuccess.jsx';
 import PayAppointmentPage from './features/payments/PayAppointmentPAge.jsx'; 
+import ProductRegistrationPage from './features/inventory/ProductRegistrationPage.jsx';
+import InventoryListPage from './features/inventory/InventoryListPage.jsx';
+import PointOfSalePage from './features/sales/PointOfSalePage.jsx';
 
 const queryClient = new QueryClient();
 
@@ -61,7 +64,14 @@ function App() {
               <Route path="/admin/species" element={<SpeciesManagementPage />} />
               <Route path="/admin/services" element={<ServiceManagementPage />} /> 
             </Route>
-                        
+            {/* Rutas protegidas para Administradores y recepcionistas*/}
+            <Route element={<ProtectedRoute allowedRoles={['Admin', 'Recepcionista']} />}>
+              <Route path="/inventory/products/new" element={<ProductRegistrationPage />} />
+              <Route path="/pos" element={<PointOfSalePage />} />
+            </Route>
+            <Route element={<ProtectedRoute allowedRoles={['Admin', 'Recepcionista', 'Veterinario']} />}>
+              <Route path="/inventory" element={<InventoryListPage />} />
+            </Route>  
           </Route>
         </Routes>
       </BrowserRouter>

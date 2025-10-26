@@ -198,7 +198,23 @@ export const getAppointments = async (req, res, next) => {
     const appointments = await Appointment.findAll({
       where: whereClause,
       include: [
-        { model: Pet, as: 'pet', attributes: ['id', 'name', 'ownerId'] },
+        { 
+          model: Pet, 
+          as: 'pet', 
+          attributes: ['id', 'name', 'ownerId', 'speciesId'],
+          include: [
+            { 
+              model: User, 
+              as: 'owner', 
+              attributes: ['id', 'firstName', 'lastName', 'email', 'phone'] 
+            },
+            { 
+              model: db.Species, 
+              as: 'species', 
+              attributes: ['id', 'name'] 
+            }
+          ]
+        },
         { model: Service, as: 'service', attributes: ['name', 'duration', 'type'] },
         { model: User, as: 'professional', attributes: ['id', 'firstName', 'lastName'] },
       ],

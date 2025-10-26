@@ -7,6 +7,8 @@ import petRoutes from './pet.routes.js';
 import serviceRoutes from './service.routes.js'; 
 import appointmentRoutes from './appointment.routes.js';
 import paymentRoutes from './payment.routes.js';
+import productRoutes from './product.routes.js'; 
+import salesRoutes from './sales.routes.js';
 
 const router = Router();
 
@@ -17,5 +19,7 @@ router.use('/pets', petRoutes);
 router.use('/services', serviceRoutes); 
 router.use('/appointments', appointmentRoutes);
 router.use('/payments', paymentRoutes);
+router.use('/products', productRoutes); 
+router.use('/sales', salesRoutes);
 
 export default router;

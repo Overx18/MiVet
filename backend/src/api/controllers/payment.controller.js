@@ -78,7 +78,7 @@ export const createAppointmentAndPaymentIntent = async (req, res, next) => {
 // [2] Webhook de Stripe (confirma pago y crea cita)
 export const handleStripeWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
-  const endpointSecret = config.stripe.webhookSecret; // Tu secret del webhook de Stripe
+  const endpointSecret = config.stripe.webhookSecret;
 
   let event;
 
@@ -91,47 +91,60 @@ export const handleStripeWebhook = async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // 2. Manejar únicamente el evento 'payment_intent.succeeded'
+  // 2. Manejar el evento 'payment_intent.succeeded'
   if (event.type === 'payment_intent.succeeded') {
     const paymentIntent = event.data.object;
-    console.log('✅ Event `payment_intent.succeeded` received:', paymentIntent.id);
-
     const metadata = paymentIntent.metadata;
+    console.log('✅ Event `payment_intent.succeeded` received:', paymentIntent.id);
     console.log('📦 Metadata received:', metadata);
 
-    // 3. Crear la cita en la base de datos
     try {
-      // Validar que la metadata esencial existe
-      if (!metadata.userId || !metadata.petId || !metadata.serviceId || !metadata.professionalId || !metadata.dateTime) {
-        throw new Error('Incomplete metadata for creating appointment.');
+      // Diferenciar entre pago de venta y pago de cita
+      if (metadata.saleId) {
+        await db.Sale.update(
+          { status: 'Pagada' },
+          { where: { id: metadata.saleId } }
+        );
+        console.log(`✅ Venta ID: ${metadata.saleId} marcada como pagada.`);
+      } else if (metadata.appointmentId || metadata.userId) {
+        // Crear cita pagada
+        if (
+          !metadata.userId ||
+          !metadata.petId ||
+          !metadata.serviceId ||
+          !metadata.professionalId ||
+          !metadata.dateTime
+        ) {
+          throw new Error('Incomplete metadata for creating appointment.');
+        }
+
+        const newAppointment = await db.Appointment.create({
+          userId: metadata.userId,
+          petId: metadata.petId,
+          serviceId: metadata.serviceId,
+          professionalId: metadata.professionalId,
+          dateTime: new Date(metadata.dateTime),
+          status: 'Pagada',
+          totalPrice: parseFloat(metadata.totalPrice),
+          paymentIntentId: paymentIntent.id,
+        });
+
+        console.log('✅ Appointment created successfully:', newAppointment.id);
       }
-
-      const newAppointment = await Appointment.create({
-        userId: metadata.userId,
-        petId: metadata.petId,
-        serviceId: metadata.serviceId,
-        professionalId: metadata.professionalId,
-        dateTime: new Date(metadata.dateTime), // Asegurarse de que es un objeto Date
-        status: 'Pagada', // Estado inicial de la cita pagada
-        totalPrice: parseFloat(metadata.totalPrice), // Asegurarse de que es un número
-        paymentIntentId: paymentIntent.id, // Guardar el ID del pago para referencia
-      });
-
-      console.log('✅ Appointment created successfully:', newAppointment.id);
-
     } catch (dbError) {
       console.error('❌ Database error creating appointment:', dbError);
-      // Si hay un error de base de datos, es crucial no decirle a Stripe que todo está bien.
-      // Devolver un 500 hará que Stripe reintente el webhook.
-      return res.status(500).json({ error: 'Failed to save appointment to database.' });
+      return res
+        .status(500)
+        .json({ error: 'Failed to save appointment to database.' });
     }
   } else {
     console.log(`🔔 Received unhandled event type: ${event.type}`);
   }
 
-  // 4. Devolver una respuesta 200 a Stripe para confirmar la recepción
+  // 3. Responder 200 OK a Stripe
   res.status(200).json({ received: true });
 };
+
 
 export const confirmPayment = async (req, res, next) => {
   try {

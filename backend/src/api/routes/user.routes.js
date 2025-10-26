@@ -4,6 +4,7 @@ import { Router } from 'express';
 import { getProfile, updateProfile, getAllUsers, updateUserRole } from '../controllers/user.controller.js';
 import { protect } from '../../middlewares/auth.middleware.js';
 import { authorize } from '../../middlewares/role.middleware.js';
+import { getClients } from '../controllers/sale.controller.js';
 
 const router = Router();
 
@@ -21,6 +22,5 @@ router.get('/', authorize('Admin', 'Recepcionista'), getAllUsers);
 
 // PUT /api/users/:id/role -> Actualizar el rol de un usuario
 router.put('/:id/role', adminOnly, updateUserRole);
-
 
 export default router;

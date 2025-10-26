@@ -182,7 +182,7 @@
     **Prioridad**: Media  
     **Estimación**: 5 puntos  
 * **US-20: Actualización de Stock**  
-  **Descripción**: Como Recepcionista o Veterinario, quiero actualizar el stock para reflejar ventas o usos.  
+  **Descripción**: Como Recepcionista, quiero actualizar el stock para reflejar ventas o usos.  
   **Criterios de Aceptación**:
 
   * Formulario para entrada/salida de productos con motivo.  
