@@ -72,12 +72,20 @@ Los requisitos funcionales se organizan por módulos principales, con subrequisi
 * **RF-10.1: Página Home** La página de inicio mostrará información general: servicios destacados, formulario de contacto, enlace a registro/login, y un carrusel de imágenes de mascotas. No requerirá autenticación. Actores: Todos (no autenticados incluidos).  
 * **RF-10.2: Página Not Found (404)** En caso de URL inválida, redirigirá a una página de error con mensaje amigable, enlace a home y sugerencia de búsqueda. Actores: Todos.
 
+### **2.11 Módulo de Inteligencia Artificial y Automatización**
+
+* **RF-11.1: Documentación Clínica Automatizada** El sistema integrará un módulo de ML para procesar conversaciones en tiempo real durante consultas veterinarias. Con consentimiento del cliente, grabará audio (vía navegador o app integrada), lo transcribirá usando NLP y generará notas médicas estructuradas (diagnóstico, síntomas, recomendaciones). Estas notas se almacenarán automáticamente en el historial médico de la mascota, accesibles desde el dashboard del Veterinario. Actores: Veterinario, Groomer.  
+* **RF-11.2: Clasificación Automática de Síntomas** El sistema permitirá a los clientes describir síntomas de mascotas por texto (ej.: en un formulario o chat). Usando ML, clasificará los síntomas, sugerirá posibles causas y asignará prioridad (urgente/no urgente), integrándose con programación de citas para sugerir slots inmediatos si es crítico. Actores: Cliente, Recepcionista.  
+* **RF-11.3: Recomendación Nutricional Básica** Basado en datos de la mascota (peso, edad, especie), el sistema usará ML para recomendar planes nutricionales básicos (ej.: tipo de alimento, porciones diarias). Estas sugerencias se mostrarán en el dashboard del Cliente o durante consultas, promoviendo bienestar preventivo. Actores: Cliente, Veterinario.  
+* **RF-11.4: Chatbot Veterinario 24/7** El sistema incluirá un chatbot impulsado por ML para responder dudas frecuentes de clientes (ej.: cuidados básicos, síntomas comunes). Integrado en la web, enviará recordatorios personalizados (vacunas, chequeos) basados en historiales, y escalará a personal humano si es complejo. Actores: Cliente, Sistema (automático).
+
   ## **3\. Consideraciones Generales para Consistencia**
 
 * Todos los módulos requerirán autenticación excepto Home, Registro, Login y Not Found.  
 * El sistema manejará errores graciosamente (ej.: mensajes claros, logs internos).  
 * Validaciones: Campos obligatorios, formatos (email, fechas), y chequeos de integridad (ej.: no programar cita en horario cerrado).  
 * Notificaciones: Emails para confirmaciones, recordatorios y alertas críticas (stock bajo).
+* Integraciones de ML requerirán APIs externas seguras (ej.: para NLP), con manejo de datos privados conforme a regulaciones."
 
   #### **2\. Requisitos No Funcionales**
 
@@ -93,7 +101,9 @@ Estos requisitos abordan aspectos de calidad del sistema.
 * RNF-2.3.1: El sistema debe cifrar datos sensibles (e.g., contraseñas, datos de pago) utilizando HTTPS y algoritmos como bcrypt para almacenamiento.  
 * RNF-2.3.2: Debe implementar autenticación basada en tokens (e.g., JWT) para sesiones, con expiración automática después de 30 minutos de inactividad.  
 * RNF-2.3.3: Accesos deben ser controlados por roles (RBAC), previniendo accesos no autorizados, y registrar logs de actividades sensibles (e.g., ediciones de datos médicos).
+* RNF-2.3.4: Consentimiento explícito para grabaciones de audio y procesamiento ML, con encriptación de datos sensibles." Y en 2.5 Compatibilidad:
 
 **2.5 Compatibilidad**
 
 * RNF-2.5.2: Debe soportar integración con servicios externos para pagos (e.g., Stripe) y emails (e.g., SendGrid).
+* RNF-2.5.3: Integración con APIs de ML como Google Cloud o Hugging Face para NLP y recomendaciones.

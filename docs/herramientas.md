@@ -18,7 +18,8 @@ ES Modules, Buenas practicas
 - @tanstack/react-query → Manejo elegante del estado asíncrono (sin Redux).
 - react-hot-toast → Notificaciones rápidas y modernas.
 - react-hook-form
-- @headlessui/react + @heroicons/react → Componentes accesibles + íconos pro.
+- ChakraUI + Lineicons → Componentes accesibles + íconos pro.
 - clsx → Limpia las clases de Tailwind (menos caos en JSX).
 - zustand → Estado global simple (usuarios, sesiones, etc.).
-- recharts → Gráficos para reportes o estadísticas.
+- chart.js → Gráficos para reportes o estadísticas.
+- Framer Motion: 

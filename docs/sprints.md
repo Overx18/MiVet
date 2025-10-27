@@ -2,7 +2,7 @@
 
 Para implementar el sistema web de gestión veterinaria utilizando Scrum en 12 semanas (6 Sprints de 2 semanas cada uno), he dividido las User Stories del Product Backlog en un cronograma detallado. 
 
-#### **Sprint 1: Fundación y Autenticación (Semanas 1-2, Puntos: 25\)**
+#### **Sprint 1: Fundación y Autenticación (Semanas 1, Puntos: 25\)**
 
 **Enfoque**: Configuración inicial y módulo de autenticación para tener un sistema básico autenticado. Esto permite acceso seguro desde el inicio.
 
@@ -19,7 +19,7 @@ Para implementar el sistema web de gestión veterinaria utilizando Scrum en 12 s
   * **Integración (Días 6-8)**: Conectar frontend a backend para autenticación; implementar redirección basada en roles. Agregar edición de perfil con confirmación de email.  
   * **Pruebas (Día 9\)**: Pruebas unitarias para endpoints y componentes; simular emails con console.log. **Entregable**: Sistema con autenticación funcional y perfiles editables. Demo: Registro, login y logout.
 
-#### **Sprint 2: Gestión de Usuarios Avanzada y Mascotas (Semanas 3-4, Puntos: 28\)**
+#### **Sprint 2: Gestión de Usuarios Avanzada y Mascotas (Semanas 2, Puntos: 28\)**
 
 **Enfoque**: Completar gestión de usuarios y agregar módulo de mascotas para permitir registros básicos de clientes.
 
@@ -36,7 +36,7 @@ Para implementar el sistema web de gestión veterinaria utilizando Scrum en 12 s
   * **Integración (Días 6-8)**: Vincular mascotas a usuarios (Clientes). Implementar eliminación lógica y validaciones (ej.: especie existente).  
   * **Pruebas (Día 9\)**: Probar flujos completos de roles y mascotas; verificar restricciones por rol. **Entregable**: Usuarios con roles gestionados y clientes registrando mascotas. Demo: Asignar rol y registrar una mascota.
 
-#### **Sprint 3: Citas Básicas y Calendario (Semanas 5-6, Puntos: 27\)**
+#### **Sprint 3: Citas Básicas y Calendario (Semanas 3-4, Puntos: 27\)**
 
 **Enfoque**: Módulo de citas con calendario interactivo y servicios básicos, para habilitar programación.
 
@@ -52,7 +52,7 @@ Para implementar el sistema web de gestión veterinaria utilizando Scrum en 12 s
   * **Integración (Días 6-8)**: Calcular precios automáticos; simular recordatorios (cron job básico o setTimeout para pruebas).  
   * **Pruebas (Día 9\)**: Validar colisiones de horarios y vistas filtradas por rol. **Entregable**: Citas programadas visibles en calendario. Demo: Programar una cita y ver en calendario.
 
-#### **Sprint 4: Citas Avanzadas, Pagos e Inventario (Semanas 7-8, Puntos: 26\)**
+#### **Sprint 4: Citas Avanzadas, Pagos e Inventario (Semanas 5-6, Puntos: 26\)**
 
 **Enfoque**: Agregar pagos, cancelaciones y gestión de inventario para hacer las citas operativas.
 
@@ -68,33 +68,57 @@ Para implementar el sistema web de gestión veterinaria utilizando Scrum en 12 s
   * **Integración (Días 6-8)**: Vincular pagos a citas; bloquear stock insuficiente.  
   * **Pruebas (Día 9\)**: Probar flujos de pago y stock (ej.: intento de venta sin stock). **Entregable**: Citas pagadas y gestionadas, con inventario actualizable. Demo: Pagar y cancelar una cita.
 
-#### **Sprint 5: Historial, Dashboards y Reportes (Semanas 9-10, Puntos: 23\)**
+#### **Sprint 5: Historial, Dashboards y IA Básica (Semanas 7-8, Puntos: 28)**
 
-**Enfoque**: Agregar historial médico y vistas resumidas para roles, más reportes para Admin.
+**Enfoque**: Agregar historial médico y vistas resumidas para roles. Incluir IA básica para documentación automatizada y recomendaciones, integrándolas con dashboards para pruebas tempranas.
 
 **User Stories Seleccionadas**:
 
 * US-21: Registro de Historial Médico (5 puntos)  
 * US-22: Consulta de Historial Médico (5 puntos)  
 * US-23: Dashboards Personalizados (8 puntos)  
-* US-24: Generación de Reportes (5 puntos) **Tareas Detalladas**:  
-  * **Backend (Días 2-5)**: Modelos para Historial; endpoints para registro/consulta. Queries para dashboards y reportes (export a CSV/PDF con librerías como pdfkit).  
-  * **Frontend (Días 2-5)**: Vistas de historial cronológico; dashboards con gráficos (recharts) personalizados por rol.  
-  * **Integración (Días 6-8)**: Vincular historial a citas e inventario.  
-  * **Pruebas (Día 9\)**: Verificar filtros en reportes y vistas por rol. **Entregable**: Dashboards funcionales y reportes generados. Demo: Ver dashboard de Veterinario y generar reporte.
+* US-31: Documentación Clínica Automatizada (8 puntos)  # Nueva  
+* US-33: Recomendación Nutricional Básica (5 puntos)    # Nueva, movida aquí por integración con dashboards  
 
-#### **Sprint 6: Configuración, Páginas Principales y Pulido Final (Semanas 11-12, Puntos: 12\)**
+**Tareas Detalladas**:  
+  * **Backend (Días 2-5)**: Modelos para Historial; endpoints para registro/consulta. Integrar API de ML (ej.: Hugging Face para NLP) para transcripción audio y recomendaciones nutricionales básicas.  
+  * **Frontend (Días 2-5)**: Vistas de historial cronológico; dashboards con gráficos (recharts) personalizados por rol, incluyendo secciones para recomendaciones IA. Botón para grabación audio con consentimiento.  
+  * **Integración (Días 6-8)**: Vincular historial a citas e inventario; procesar audio en tiempo real para notas automáticas.  
+  * **Pruebas (Día 9\)**: Verificar filtros en vistas, precisión inicial de ML (usar datasets de prueba para nutrición). **Entregable**: Dashboards funcionales con IA básica. Demo: Generar nota automática y ver recomendación en dashboard.
 
-**Enfoque**: Finalizar con configuración, páginas públicas y pruebas integrales para un sistema completo.
+#### **Sprint 6: Reportes, Configuración e IA Intermedia (Semanas 9-10, Puntos: 23)**
+
+**Enfoque**: Finalizar reportes y configuración general. Agregar IA intermedia como clasificación de síntomas, probando integraciones con módulos existentes.
 
 **User Stories Seleccionadas**:
 
+* US-24: Generación de Reportes (5 puntos)  
 * US-25: Configuración General (3 puntos)  
-* US-26: Página Home (3 puntos)  
-* US-27: Página Not Found (404) (2 puntos)    
-* US-30: Pruebas y Despliegue Local (5 puntos) **Tareas Detalladas**:  
-  * **Backend (Días 2-5)**: Endpoints para configuración (horarios, precios). Ajustes finales de seguridad.  
-  * **Frontend (Días 2-5)**: Página Home con carrusel y formulario; página 404\. Lista de mascotas con búsqueda.  
-  * **Integración (Días 6-8)**: Pruebas end-to-end; deploy local completo.  
-  * **Pruebas (Día 9\)**: Cobertura total, corrección de bugs, optimización (ej.: performance en calendario). **Entregable**: Sistema completo y probado. Demo: Navegación completa, incluyendo Home y errores.
+* US-32: Clasificación Automática de Síntomas (5 puntos)  # Nueva  
+* US-15: Recordatorios de Citas (3 puntos)  # Movida aquí para alineación con IA (recordatorios personalizados)  
+* US-30: Pruebas y Despliegue Local (5 puntos)  # Parcial, enfocado en pruebas intermedias  
 
+**Tareas Detalladas**:  
+  * **Backend (Días 2-5)**: Queries para reportes (export a CSV/PDF). Endpoints para configuración. Integrar ML para clasificación de síntomas (ej.: modelo preentrenado para texto).  
+  * **Frontend (Días 2-5)**: Interfaz para reportes filtrados; formularios de configuración. Formulario para síntomas con sugerencias IA.  
+  * **Integración (Días 6-8)**: Vincular clasificación a citas y recordatorios. Pruebas locales parciales.  
+  * **Pruebas (Día 9\)**: Cobertura de reportes y precisión de clasificación (escenarios de síntomas comunes). **Entregable**: Reportes generados y IA para síntomas funcional. Demo: Clasificar síntomas y generar reporte.
+
+#### **Sprint 7: Páginas Principales, IA Avanzada y Pulido Final (Semanas 11-12, Puntos: 25)**
+
+**Enfoque**: Completar páginas públicas, integrar IA avanzada (chatbot) y realizar pruebas exhaustivas/end-to-end para un sistema completo y estable.
+
+**User Stories Seleccionadas**:
+
+* US-26: Página Home (3 puntos)  
+* US-27: Página Not Found (404) (2 puntos)  
+* US-34: Chatbot Veterinario 24/7 (8 puntos)  # Nueva, avanzada por complejidad  
+* US-30: Pruebas y Despliegue Local (5 puntos)  # Completo, con énfasis en ML  
+* US-05: Gestión de Roles (5 puntos)  # Revisión final para asegurar accesos IA por rol  
+* US-12: Calendario Interactivo (2 puntos)  # Optimización final  
+
+**Tareas Detalladas**:  
+  * **Backend (Días 2-5)**: Ajustes finales de seguridad y roles. Integrar ML para chatbot (ej.: Dialogflow o Rasa para respuestas 24/7).  
+  * **Frontend (Días 2-5)**: Página Home con carrusel y formulario; página 404. Widget de chatbot integrado en web.  
+  * **Integración (Días 6-8)**: Vincular chatbot a historial y recordatorios; pruebas end-to-end de todo el sistema.  
+  * **Pruebas (Día 9\)**: Cobertura total, corrección de bugs, optimización (performance en calendario y ML). Probar precisión de chatbot con consultas reales, incluyendo escalado a humanos. **Entregable**: Sistema completo, probado y deployable localmente. Demo: Navegación completa con chatbot respondiendo dudas.

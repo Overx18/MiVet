@@ -291,3 +291,40 @@
     **Prioridad**: Media  
     **Estimación**: 5 puntos
 
+## **12. Módulo de Inteligencia Artificial**
+
+* **US-31: Documentación Clínica Automatizada**  
+  **Descripción**: Como Veterinario, quiero que el sistema procese conversaciones en consultas para generar notas automáticas y reducir tiempo administrativo.  
+  **Criterios de Aceptación**:  
+  - Botón para iniciar grabación de audio con consentimiento.  
+  - Transcripción y resumen vía NLP, integrados al historial médico.  
+  - Acceso desde dashboard; edición manual posible.  
+    **Prioridad**: Alta  
+    **Estimación**: 8 puntos  
+
+* **US-32: Clasificación Automática de Síntomas**  
+  **Descripción**: Como Cliente, quiero describir síntomas para recibir sugerencias automáticas de causas y prioridad.  
+  **Criterios de Aceptación**:  
+  - Formulario de texto para síntomas.  
+  - ML clasifica y sugiere (ej.: "posible intoxicación, urgencia alta").  
+  - Integración con citas para slots recomendados.  
+    **Prioridad**: Media  
+    **Estimación**: 5 puntos  
+
+* **US-33: Recomendación Nutricional Básica**  
+  **Descripción**: Como Cliente o Veterinario, quiero recomendaciones de dieta basadas en datos de la mascota.  
+  **Criterios de Aceptación**:  
+  - Cálculo automático con ML (peso, edad, especie).  
+  - Visualización en dashboard; sugerencias editables.  
+  - Vinculación a inventario para productos recomendados.  
+    **Prioridad**: Media  
+    **Estimación**: 5 puntos  
+
+* **US-34: Chatbot Veterinario 24/7**  
+  **Descripción**: Como Cliente, quiero un chatbot para dudas frecuentes y recordatorios personalizados.  
+  **Criterios de Aceptación**:  
+  - Chat integrado en web, impulsado por ML.  
+  - Respuestas a consultas comunes; escalado a email si complejo.  
+  - Recordatorios basados en historial (ej.: vacunas).  
+    **Prioridad**: Alta  
+    **Estimación**: 8 puntos
