@@ -110,3 +110,32 @@ export const updateUserRole = async (req, res, next) => {
     next(error);
   }
 };
+
+//  [Admin] Activar o desactivar un usuario
+export const toggleUserStatus = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findByPk(id);
+    if (!user) return next(createError(404, 'Usuario no encontrado.'));
+
+    // Evitar que un admin se desactive a sí mismo
+    if (user.id === req.user.id) {
+      return next(createError(403, 'No puedes desactivar tu propia cuenta.'));
+    }
+
+    await user.update({ isActive: !user.isActive });
+
+    res.status(200).json({
+      message: `Usuario ${user.isActive ? 'activado' : 'desactivado'} correctamente.`,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isActive: user.isActive,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};

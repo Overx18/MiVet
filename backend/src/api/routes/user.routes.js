@@ -1,10 +1,9 @@
 //Rutas para /api/users
 // backend/src/api/routes/user.routes.js
 import { Router } from 'express';
-import { getProfile, updateProfile, getAllUsers, updateUserRole } from '../controllers/user.controller.js';
+import { getProfile, updateProfile, getAllUsers, updateUserRole, toggleUserStatus } from '../controllers/user.controller.js';
 import { protect } from '../../middlewares/auth.middleware.js';
 import { authorize } from '../../middlewares/role.middleware.js';
-import { getClients } from '../controllers/sale.controller.js';
 
 const router = Router();
 
@@ -22,5 +21,9 @@ router.get('/', authorize('Admin', 'Recepcionista'), getAllUsers);
 
 // PUT /api/users/:id/role -> Actualizar el rol de un usuario
 router.put('/:id/role', adminOnly, updateUserRole);
+
+// PATCH /api/users/:id/toggle-status -> Activar/Desactivar usuario
+router.patch('/:id/toggle-status', adminOnly, toggleUserStatus);
+
 
 export default router;

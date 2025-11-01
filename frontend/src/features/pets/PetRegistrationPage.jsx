@@ -1,7 +1,27 @@
-// frontend/src/features/pets/PetRegistrationPage.jsx
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useState } from 'react';
+import {
+  Box,
+  Card,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Select,
+  MenuItem,
+  Grid,
+  CircularProgress,
+  Alert,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+} from '@mui/material';
+import {
+  Pets as PetsIcon,
+  Save as SaveIcon,
+} from '@mui/icons-material';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -12,7 +32,7 @@ const fetchSpecies = async (token) => {
   const { data } = await apiClient.get('/species', {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return Array.isArray(data) ? data : [];
+  return Array.isArray(data) ? data : data.species || [];
 };
 
 // Obtener lista de clientes (solo para recepcionistas)
@@ -43,11 +63,23 @@ export default function PetRegistrationPage() {
   const isReceptionist = user?.role === 'Recepcionista';
 
   const {
-    register,
+    control,
     handleSubmit,
     reset,
-    formState: { errors },
-  } = useForm();
+    formState: { errors, isDirty },
+  } = useForm({
+    defaultValues: {
+      ownerId: '',
+      name: '',
+      speciesId: '',
+      race: '',
+      age: '',
+      weight: '',
+      gender: '',
+      birthDate: '',
+      notes: '',
+    },
+  });
 
   // Obtener especies
   const { data: speciesList = [], isLoading: loadingSpecies } = useQuery({
@@ -67,7 +99,7 @@ export default function PetRegistrationPage() {
   const mutation = useMutation({
     mutationFn: createPet,
     onSuccess: () => {
-      toast.success('Mascota registrada correctamente 🐾');
+      toast.success('🐾 Mascota registrada correctamente');
       reset();
     },
     onError: (err) => {
@@ -80,7 +112,7 @@ export default function PetRegistrationPage() {
     const petData = {
       name: formData.name,
       speciesId: formData.speciesId,
-      race: formData.race,
+      race: formData.race || null,
       age: formData.age ? Number(formData.age) : null,
       weight: formData.weight ? Number(formData.weight) : null,
       gender: formData.gender || null,
@@ -94,119 +126,400 @@ export default function PetRegistrationPage() {
 
   // Estados de carga
   if (loadingSpecies || (isReceptionist && loadingClients)) {
-    return <div className="text-center py-8 text-gray-600">Cargando datos...</div>;
-  }
-
-  // Validar datos cargados
-  if (isReceptionist && !Array.isArray(clientsList)) {
-    return <div className="text-center text-red-500">Error: la lista de clientes no es válida.</div>;
+    return (
+      <Container maxWidth="md" sx={{ paddingY: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
   }
 
   return (
-    <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Registrar Nueva Mascota</h2>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        {/* Dueño (solo recepcionista) */}
-        {isReceptionist && (
-          <div>
-            <label className="block text-sm font-medium mb-1">Propietario *</label>
-            <select
-              {...register('ownerId', { required: 'Selecciona un cliente' })}
-              className="w-full px-3 py-2 border rounded-md"
-            >
-              <option value="">Selecciona un cliente</option>
-              {Array.isArray(clientsList) && clientsList.length > 0 ? (
-                clientsList.map((client) => (
-                  <option key={client.id} value={client.id}>
-                    {client.firstName} {client.lastName}
-                  </option>
-                ))
-              ) : (
-                <option disabled>No hay clientes disponibles</option>
-              )}
-            </select>
-            {errors.ownerId && <p className="text-sm text-red-600">{errors.ownerId.message}</p>}
-          </div>
-        )}
-
-        {/* Nombre */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Nombre *</label>
-          <input
-            type="text"
-            {...register('name', { required: 'El nombre es obligatorio' })}
-            className="w-full px-3 py-2 border rounded-md"
-          />
-          {errors.name && <p className="text-sm text-red-600">{errors.name.message}</p>}
-        </div>
-
-        {/* Especie */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Especie *</label>
-          <select
-            {...register('speciesId', { required: 'Selecciona una especie' })}
-            className="w-full px-3 py-2 border rounded-md"
+    <Container maxWidth="md" sx={{ paddingY: 4 }}>
+      {/* Header */}
+      <Box sx={{ marginBottom: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
+          <PetsIcon sx={{ fontSize: 32, color: '#1E40AF' }} />
+          <Typography
+            variant="h1"
+            sx={{
+              color: '#1F2937',
+              fontSize: { xs: '1.75rem', md: '2.5rem' },
+              fontWeight: 700,
+            }}
           >
-            <option value="">Selecciona una especie</option>
-            {speciesList.map((sp) => (
-              <option key={sp.id} value={sp.id}>
-                {sp.name}
-              </option>
-            ))}
-          </select>
-          {errors.speciesId && <p className="text-sm text-red-600">{errors.speciesId.message}</p>}
-        </div>
+            Registrar Nueva Mascota
+          </Typography>
+        </Box>
+        <Typography variant="body1" color="textSecondary">
+          Completa los datos de tu mascota para registrarla en el sistema
+        </Typography>
+      </Box>
 
-        {/* Raza */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Raza</label>
-          <input type="text" {...register('race')} className="w-full px-3 py-2 border rounded-md" />
-        </div>
+      {/* Card Principal */}
+      <Card
+        sx={{
+          padding: { xs: 3, sm: 4 },
+          borderRadius: 2,
+          border: '1px solid #E5E7EB',
+          backgroundColor: '#FFFFFF',
+        }}
+      >
+        {/* Info Alert */}
+        <Alert severity="info" sx={{ marginBottom: 4, borderRadius: 1 }}>
+          <Typography variant="body2">
+            Los campos marcados con <strong>*</strong> son obligatorios.
+          </Typography>
+        </Alert>
 
-        {/* Edad y Peso */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Edad (años)</label>
-            <input type="number" {...register('age')} className="w-full px-3 py-2 border rounded-md" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1">Peso (kg)</label>
-            <input type="number" {...register('weight')} className="w-full px-3 py-2 border rounded-md" />
-          </div>
-        </div>
+        {/* Formulario */}
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          {/* Propietario (solo recepcionista) */}
+          {isReceptionist && (
+            <Controller
+              name="ownerId"
+              control={control}
+              rules={{ required: 'Selecciona un cliente' }}
+              render={({ field }) => (
+                <FormControl
+                  fullWidth
+                  error={!!errors.ownerId}
+                  sx={{ marginBottom: 3 }}
+                >
+                  <InputLabel>Propietario *</InputLabel>
+                  <Select
+                    {...field}
+                    label="Propietario *"
+                    disabled={mutation.isPending}
+                  >
+                    <MenuItem value="">
+                      <em>Selecciona un cliente</em>
+                    </MenuItem>
+                    {Array.isArray(clientsList) && clientsList.length > 0 ? (
+                      clientsList.map((client) => (
+                        <MenuItem key={client.id} value={client.id}>
+                          {client.firstName} {client.lastName}
+                        </MenuItem>
+                      ))
+                    ) : (
+                      <MenuItem disabled>No hay clientes disponibles</MenuItem>
+                    )}
+                  </Select>
+                  {errors.ownerId && (
+                    <Typography variant="caption" sx={{ color: '#DC2626', marginTop: 0.5 }}>
+                      {errors.ownerId.message}
+                    </Typography>
+                  )}
+                </FormControl>
+              )}
+            />
+          )}
 
-        {/* Género */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Género</label>
-          <select {...register('gender')} className="w-full px-3 py-2 border rounded-md">
-            <option value="">Selecciona...</option>
-            <option value="Macho">Macho</option>
-            <option value="Hembra">Hembra</option>
-          </select>
-        </div>
+          {/* Nombre y Especie */}
+          <Grid container spacing={3} sx={{ marginBottom: 3 }}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="name"
+                control={control}
+                rules={{
+                  required: 'El nombre es obligatorio',
+                  minLength: {
+                    value: 2,
+                    message: 'Mínimo 2 caracteres',
+                  },
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Nombre de la Mascota *"
+                    fullWidth
+                    placeholder="Ej: Max"
+                    variant="outlined"
+                    error={!!errors.name}
+                    helperText={errors.name?.message}
+                    disabled={mutation.isPending}
+                  />
+                )}
+              />
+            </Grid>
 
-        {/* Fecha de nacimiento */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Fecha de nacimiento</label>
-          <input type="date" {...register('birthDate')} className="w-full px-3 py-2 border rounded-md" />
-        </div>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="speciesId"
+                control={control}
+                rules={{ required: 'Selecciona una especie' }}
+                render={({ field }) => (
+                <FormControl fullWidth error={!!errors.speciesId}>
+                  <InputLabel shrink>Especie *</InputLabel>
+                  <Select
+                    {...field}
+                    label="Especie *"
+                    notched
+                    displayEmpty
+                    disabled={mutation.isPending}
+                  >
+                    <MenuItem value="">
+                      <em>Selecciona una especie</em>
+                    </MenuItem>
+                    {speciesList.map((sp) => (
+                      <MenuItem key={sp.id} value={sp.id}>
+                        {sp.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.speciesId && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: '#DC2626', mt: 0.5 }}
+                    >
+                      {errors.speciesId.message}
+                    </Typography>
+                  )}
+                </FormControl>
+                )}
+              />
+            </Grid>
+          </Grid>
 
-        {/* Notas */}
-        <div>
-          <label className="block text-sm font-medium mb-1">Notas</label>
-          <textarea {...register('notes')} rows={3} className="w-full px-3 py-2 border rounded-md" />
-        </div>
+          {/* Raza y Género */}
+          <Grid container spacing={3} sx={{ marginBottom: 3 }}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="race"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Raza"
+                    fullWidth
+                    placeholder="Ej: Labrador"
+                    variant="outlined"
+                    disabled={mutation.isPending}
+                  />
+                )}
+              />
+            </Grid>
 
-        {/* Botón */}
-        <button
-          type="submit"
-          disabled={mutation.isPending}
-          className="w-full px-4 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 disabled:bg-gray-400"
-        >
-          {mutation.isPending ? 'Guardando...' : 'Registrar Mascota'}
-        </button>
-      </form>
-    </div>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="gender"
+                control={control}
+                render={({ field }) => (
+                  <FormControl fullWidth>
+                    <InputLabel shrink>Género</InputLabel>
+                    <Select
+                      {...field}
+                      label="Género"
+                      notched
+                      displayEmpty
+                      disabled={mutation.isPending}
+                    >
+                      <MenuItem value="">
+                        <em>Selecciona...</em>
+                      </MenuItem>
+                      <MenuItem value="Macho">Macho</MenuItem>
+                      <MenuItem value="Hembra">Hembra</MenuItem>
+                    </Select>
+                  </FormControl>
+                )}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Edad y Peso */}
+          <Grid container spacing={3} sx={{ marginBottom: 3 }}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="age"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Edad (años)"
+                    type="number"
+                    fullWidth
+                    placeholder="Ej: 3"
+                    variant="outlined"
+                    inputProps={{
+                      min: 0,
+                      step: 0.1,
+                    }}
+                    disabled={mutation.isPending}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="weight"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Peso (kg)"
+                    type="number"
+                    fullWidth
+                    placeholder="Ej: 25.5"
+                    variant="outlined"
+                    inputProps={{
+                      min: 0,
+                      step: 0.1,
+                    }}
+                    disabled={mutation.isPending}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <Typography variant="caption" sx={{ color: '#6B7280' }}>
+                            kg
+                          </Typography>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
+
+          {/* Fecha de nacimiento */}
+          <Controller
+            name="birthDate"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Fecha de nacimiento"
+                type="date"
+                fullWidth
+                variant="outlined"
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                sx={{ marginBottom: 3 }}
+                disabled={mutation.isPending}
+              />
+            )}
+          />
+
+          {/* Notas */}
+          <Controller
+            name="notes"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Notas o Observaciones"
+                multiline
+                rows={4}
+                fullWidth
+                placeholder="Ej: Alergias, medicamentos, comportamiento especial..."
+                variant="outlined"
+                sx={{ marginBottom: 4 }}
+                disabled={mutation.isPending}
+              />
+            )}
+          />
+
+          {/* Botones */}
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                size="large"
+                disabled={mutation.isPending}
+                startIcon={
+                  mutation.isPending ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <SaveIcon />
+                  )
+                }
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  padding: '12px 24px',
+                }}
+              >
+                {mutation.isPending ? 'Guardando...' : 'Registrar Mascota'}
+              </Button>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Button
+                type="button"
+                variant="outlined"
+                fullWidth
+                size="large"
+                onClick={() => reset()}
+                disabled={mutation.isPending || !isDirty}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  padding: '12px 24px',
+                }}
+              >
+                Limpiar Formulario
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* Info adicional */}
+        <Alert severity="success" sx={{ marginTop: 3, borderRadius: 1 }}>
+          <Typography variant="body2">
+            💡 Después de registrar la mascota, podrás agendar citas veterinarias.
+          </Typography>
+        </Alert>
+      </Card>
+
+      {/* Cards de ayuda */}
+      <Grid container spacing={3} sx={{ marginTop: 4 }}>
+        <Grid item xs={12} sm={6}>
+          <Card
+            sx={{
+              padding: 2.5,
+              borderRadius: 2,
+              border: '1px solid #E5E7EB',
+              backgroundColor: '#F8FAFC',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, marginBottom: 1, color: '#1E40AF' }}>
+              📋 Información Requerida
+            </Typography>
+            <Typography variant="caption" color="textSecondary" sx={{ lineHeight: 1.6, display: 'block' }}>
+              • Nombre y especie son obligatorios<br />
+              • Los demás datos son opcionales<br />
+              • La edad se expresa en años<br />
+              • El peso en kilogramos
+            </Typography>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <Card
+            sx={{
+              padding: 2.5,
+              borderRadius: 2,
+              border: '1px solid #E5E7EB',
+              backgroundColor: '#F8FAFC',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, marginBottom: 1, color: '#059669' }}>
+              🐾 Consejo
+            </Typography>
+            <Typography variant="caption" color="textSecondary" sx={{ lineHeight: 1.6, display: 'block' }}>
+              • Usa notas para datos especiales<br />
+              • Incluye alergias o medicamentos<br />
+              • Describe características únicas<br />
+              • Facilita el cuidado veterinario
+            </Typography>
+          </Card>
+        </Grid>
+      </Grid>
+    </Container>
   );
 }

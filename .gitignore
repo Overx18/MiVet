@@ -34,3 +34,5 @@ lerna-debug.log*
 # Archivos generados por el sistema operativo
 .DS_Store
 Thumbs.db
+
+docs/run.txt

@@ -55,25 +55,28 @@ export const updatePet = async (req, res, next) => {
 
     if (!pet) return next(createError(404, 'Mascota no encontrada.'));
 
-    // Si el usuario es Cliente, solo ve sus mascotas
-    if (req.user.role === 'Cliente') {
-      whereClause.ownerId = req.user.id;
-      includeClause[0].where = {};
-    } 
-    // Si el usuario es Admin o Recepcionista y envía ownerId, filtra por ese propietario
-    else if ((req.user.role === 'Admin' || req.user.role === 'Recepcionista') && req.query.ownerId) {
-      whereClause.ownerId = req.query.ownerId;
-      includeClause[0].where = {}; // Limpia cualquier filtro por nombre para evitar conflicto
+    // Verificar permisos
+    if (req.user.role === 'Cliente' && pet.ownerId !== req.user.id) {
+      return next(createError(403, 'No tienes permiso para modificar esta mascota.'));
     }
 
-        const { name, speciesId, race, age, weight, gender, birthDate, notes } = req.body;
-        await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes });
+    // Campos a actualizar
+    const { name, speciesId, race, age, weight, gender, birthDate, notes, ownerId } = req.body;
 
-        res.status(200).json(pet);
-      } catch (error) {
-        next(error);
-      }
-    };
+    // Si el usuario es Recepcionista o Admin y se pasa un ownerId, lo actualiza
+    if (req.user.role === 'Admin' || req.user.role === 'Recepcionista') {
+      await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes, ownerId });
+    } else {
+      await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes });
+    }
+
+    res.status(200).json(pet);
+  } catch (error) {
+    console.error('Error en updatePet:', error);
+    next(error);
+  }
+};
+
 
 // [Cliente, Recepcionista, Veterinario] Eliminar una mascota (borrado lógico)
 export const deletePet = async (req, res, next) => {

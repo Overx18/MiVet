@@ -365,3 +365,4 @@ export const cancelAppointment = async (req, res, next) => {
     next(error);
   }
 };
+

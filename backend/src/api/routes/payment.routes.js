@@ -3,7 +3,9 @@ import { createAppointmentAndPaymentIntent } from '../controllers/payment.contro
 import { protect } from '../../middlewares/auth.middleware.js';
 
 const router = Router();
+router.use(protect);
 
-router.post('/schedule-and-pay', protect, createAppointmentAndPaymentIntent);
+// Crear intento de pago para cita
+router.post('/schedule-and-pay', createAppointmentAndPaymentIntent);
 
 export default router;

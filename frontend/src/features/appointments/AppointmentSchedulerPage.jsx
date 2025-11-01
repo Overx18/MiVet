@@ -3,7 +3,36 @@ import { useForm, Controller } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Calendar, Clock, User, PawPrint, Stethoscope, DollarSign } from 'lucide-react';
+import {
+  Box,
+  Card,
+  Container,
+  Typography,
+  Button,
+  Select,
+  MenuItem,
+  TextField,
+  Grid,
+  CircularProgress,
+  Alert,
+  FormControl,
+  InputLabel,
+  Stepper,
+  Step,
+  StepLabel,
+  Divider,
+  Paper,
+} from '@mui/material';
+import {
+  EventAvailable as EventAvailableIcon,
+  Person as PersonIcon,
+  Pets as PetsIcon,
+  LocalHospital as LocalHospitalIcon,
+  AccessTime as AccessTimeIcon,
+  NavigateNext as NavigateNextIcon,
+  NavigateBefore as NavigateBeforeIcon,
+  CheckCircle as CheckCircleIcon,
+} from '@mui/icons-material';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -11,33 +40,33 @@ import { useAuthStore } from '../../store/auth.store';
 const fetchClients = (token) =>
   apiClient
     .get('/users?role=Cliente', { headers: { Authorization: `Bearer ${token}` } })
-    .then(res => res.data.users || []);
+    .then((res) => res.data.users || []);
 
 const fetchUserPets = (token) =>
   apiClient
     .get('/pets', { headers: { Authorization: `Bearer ${token}` } })
-    .then(res => res.data.pets || []);
+    .then((res) => res.data.pets || []);
 
 const fetchPetsByOwner = (ownerId, token) =>
   apiClient
     .get(`/pets?ownerId=${ownerId}`, { headers: { Authorization: `Bearer ${token}` } })
-    .then(res => res.data.pets || []);
+    .then((res) => res.data.pets || []);
 
 const fetchServices = (token) =>
   apiClient
     .get('/services', { headers: { Authorization: `Bearer ${token}` } })
-    .then(res => res.data || []);
+    .then((res) => res.data || []);
 
 const fetchProfessionals = (type, token) =>
   apiClient
     .get(`/appointments/professionals?type=${type}`, { headers: { Authorization: `Bearer ${token}` } })
-    .then(res => res.data || []);
+    .then((res) => res.data || []);
 
 const fetchAvailableSlots = (params, token) => {
   const queryParams = new URLSearchParams(params).toString();
   return apiClient
     .get(`/appointments/availability?${queryParams}`, { headers: { Authorization: `Bearer ${token}` } })
-    .then(res => res.data || []);
+    .then((res) => res.data || []);
 };
 
 const scheduleAndCreateIntent = ({ appointmentData, token }) =>
@@ -50,17 +79,37 @@ export default function AppointmentSchedulerPage() {
   const user = useAuthStore((state) => state.user);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm();
+
+  const {
+    control,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    defaultValues: {
+      ownerId: '',
+      petId: '',
+      serviceId: '',
+      professionalId: '',
+      date: '',
+      time: '',
+    },
+  });
+
+  const [activeStep, setActiveStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
   // Determine user role
-  const isReceptionistOrAdmin = user?.role === 'Recepcionista' || user?.role === 'Admin';
+  const isReceptionistOrAdmin =
+    user?.role === 'Recepcionista' || user?.role === 'Admin';
 
   // --- Form field watchers ---
   const selectedOwnerId = watch('ownerId');
   const selectedServiceId = watch('serviceId');
   const selectedProfessionalId = watch('professionalId');
   const selectedDate = watch('date');
+  const selectedPetId = watch('petId');
 
   // --- Queries ---
   const { data: clients = [] } = useQuery({
@@ -89,7 +138,7 @@ export default function AppointmentSchedulerPage() {
     enabled: !!token,
   });
 
-  const selectedService = services?.find(s => s.id === selectedServiceId);
+  const selectedService = services?.find((s) => s.id === selectedServiceId);
 
   const { data: professionals = [], isLoading: isLoadingProfessionals } = useQuery({
     queryKey: ['professionals', selectedService?.type],
@@ -139,10 +188,10 @@ export default function AppointmentSchedulerPage() {
       const { clientSecret } = response.data;
       const { appointmentData } = variables;
 
-      navigate('/pay-appointment', {
+      navigate('/appointments/pay', {
         state: {
           clientSecret,
-          appointmentData,
+          appointmentData: response.data.appointmentData,
         },
       });
     },
@@ -170,201 +219,478 @@ export default function AppointmentSchedulerPage() {
   const isLoadingDisplayPets = isReceptionistOrAdmin ? isLoadingPets : isLoadingMyPets;
   const minDate = new Date().toISOString().split('T')[0];
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-indigo-50 py-12 px-4">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <PawPrint className="w-8 h-8 text-indigo-600" />
-            <h1 className="text-4xl font-bold text-gray-900">Agendar Cita</h1>
-          </div>
-          <p className="text-gray-600 text-lg">Sistema de reservas veterinarias</p>
-        </div>
+  // Pasos del wizard
+  const steps = ['Mascota', 'Servicio', 'Profesional', 'Fecha y Hora'];
 
-        {/* Form Card */}
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="bg-white rounded-xl shadow-lg p-8 space-y-6"
-        >
-          {/* Owner Selection (Receptionist/Admin only) */}
-          {isReceptionistOrAdmin && (
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <User className="w-4 h-4 text-indigo-600" />
-                Propietario
-              </label>
-              <select
-                {...register('ownerId', { required: 'Seleccione un propietario' })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-gray-50 hover:bg-gray-100"
-              >
-                <option value="">-- Seleccione un cliente --</option>
-                {clients?.map(client => (
-                  <option key={client.id} value={client.id}>
-                    {client.firstName} {client.lastName}
-                  </option>
-                ))}
-              </select>
-              {errors.ownerId && (
-                <p className="text-sm text-red-500 font-medium">{errors.ownerId.message}</p>
+  // Validar si cada paso está completo
+  const isStep0Complete = isReceptionistOrAdmin ? !!selectedOwnerId && !!selectedPetId : !!selectedPetId;
+  const isStep1Complete = !!selectedServiceId;
+  const isStep2Complete = !!selectedProfessionalId;
+  const isStep3Complete = !!selectedDate && !!watch('time');
+
+  const canProceed = [isStep0Complete, isStep1Complete, isStep2Complete, isStep3Complete][activeStep];
+
+  const handleNext = () => {
+    if (activeStep < steps.length - 1) {
+      setActiveStep(activeStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (activeStep > 0) {
+      setActiveStep(activeStep - 1);
+    }
+  };
+
+  // Obtener datos seleccionados para resumen
+  const selectedPetData = displayPets?.find((p) => p.id === selectedPetId);
+  const selectedServiceData = services?.find((s) => s.id === selectedServiceId);
+  const selectedProfessionalData = professionals?.find((p) => p.id === selectedProfessionalId);
+  const selectedClientData = clients?.find((c) => c.id === selectedOwnerId);
+
+  return (
+    <Container maxWidth="md" sx={{ paddingY: 4 }}>
+      {/* Header */}
+      <Box sx={{ marginBottom: 4, textAlign: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, marginBottom: 1 }}>
+          <EventAvailableIcon sx={{ fontSize: 32, color: '#1E40AF' }} />
+          <Typography
+            variant="h1"
+            sx={{
+              color: '#1F2937',
+              fontSize: { xs: '1.75rem', md: '2.5rem' },
+              fontWeight: 700,
+            }}
+          >
+            Agendar Cita
+          </Typography>
+        </Box>
+        <Typography variant="body1" color="textSecondary">
+          Sistema de reservas veterinarias
+        </Typography>
+      </Box>
+
+      {/* Main Card */}
+      <Card
+        sx={{
+          borderRadius: 2,
+          border: '1px solid #E5E7EB',
+          overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        }}
+      >
+        {/* Stepper */}
+        <Box sx={{ padding: 3, backgroundColor: '#F8FAFC', borderBottom: '1px solid #E5E7EB' }}>
+          <Stepper activeStep={activeStep} alternativeLabel>
+            {steps.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Box>
+
+        {/* Form Content */}
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ padding: 4 }}>
+          {/* Info Alert */}
+          <Alert severity="info" sx={{ marginBottom: 3, borderRadius: 1 }}>
+            <Typography variant="body2">
+              Paso {activeStep + 1} de {steps.length}: <strong>{steps[activeStep]}</strong>
+            </Typography>
+          </Alert>
+
+          {/* Step 0: Owner (if receptionist) and Pet Selection */}
+          {activeStep === 0 && (
+            <Box sx={{ space: 3 }}>
+              {/* Owner Selection (Receptionist/Admin only) */}
+              {isReceptionistOrAdmin && (
+                <Controller
+                  name="ownerId"
+                  control={control}
+                  rules={{ required: 'Seleccione un propietario' }}
+                  render={({ field }) => (
+                    <FormControl
+                      fullWidth
+                      error={!!errors.ownerId}
+                      sx={{ marginBottom: 3 }}
+                    >
+                      <InputLabel>Propietario *</InputLabel>
+                      <Select
+                        {...field}
+                        label="Propietario *"
+                        startAdornment={<PersonIcon sx={{ marginRight: 1, color: '#1E40AF' }} />}
+                      >
+                        <MenuItem value="">
+                          <em>Seleccione un cliente</em>
+                        </MenuItem>
+                        {clients?.map((client) => (
+                          <MenuItem key={client.id} value={client.id}>
+                            {client.firstName} {client.lastName}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {errors.ownerId && (
+                        <Typography variant="caption" sx={{ color: '#DC2626', marginTop: 0.5 }}>
+                          {errors.ownerId.message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  )}
+                />
               )}
-            </div>
+
+              {/* Pet Selection */}
+              <Controller
+                name="petId"
+                control={control}
+                rules={{ required: 'Seleccione una mascota' }}
+                render={({ field }) => (
+                  <FormControl
+                    fullWidth
+                    error={!!errors.petId}
+                    disabled={!ownerToFetchPets || isLoadingDisplayPets}
+                  >
+                    <InputLabel>Mascota *</InputLabel>
+                    <Select
+                      {...field}
+                      label="Mascota *"
+                    >
+                      <MenuItem value="">
+                        <em>Seleccione una mascota</em>
+                      </MenuItem>
+                      {isLoadingDisplayPets && (
+                        <MenuItem disabled>Cargando mascotas...</MenuItem>
+                      )}
+                      {!isLoadingDisplayPets && displayPets?.length === 0 && (
+                        <MenuItem disabled>No hay mascotas disponibles</MenuItem>
+                      )}
+                      {displayPets?.map((pet) => (
+                        <MenuItem key={pet.id} value={pet.id}>
+                          {pet.name} ({pet.species?.name || 'Especie desconocida'})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    {errors.petId && (
+                      <Typography variant="caption" sx={{ color: '#DC2626', marginTop: 0.5 }}>
+                        {errors.petId.message}
+                      </Typography>
+                    )}
+                  </FormControl>
+                )}
+              />
+            </Box>
           )}
 
-          {/* Pet Selection */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <PawPrint className="w-4 h-4 text-indigo-600" />
-              Mascota
-            </label>
-            <select
-              {...register('petId', { required: 'Seleccione una mascota' })}
-              disabled={!ownerToFetchPets || isLoadingDisplayPets}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+          {/* Step 1: Service Selection */}
+          {activeStep === 1 && (
+            <Controller
+              name="serviceId"
+              control={control}
+              rules={{ required: 'Seleccione un servicio' }}
+              render={({ field }) => (
+                <FormControl
+                  fullWidth
+                  error={!!errors.serviceId}
+                  disabled={isLoadingServices}
+                >
+                  <InputLabel>Servicio *</InputLabel>
+                  <Select
+                    {...field}
+                    label="Servicio *"
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione un servicio</em>
+                    </MenuItem>
+                    {isLoadingServices && (
+                      <MenuItem disabled>Cargando servicios...</MenuItem>
+                    )}
+                    {!isLoadingServices && services?.length === 0 && (
+                      <MenuItem disabled>No hay servicios disponibles</MenuItem>
+                    )}
+                    {services?.map((service) => (
+                      <MenuItem key={service.id} value={service.id}>
+                        {service.name} - S/ {Number(service.price || 0).toFixed(2)}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.serviceId && (
+                    <Typography variant="caption" sx={{ color: '#DC2626', marginTop: 0.5 }}>
+                      {errors.serviceId.message}
+                    </Typography>
+                  )}
+                </FormControl>
+              )}
+            />
+          )}
+
+          {/* Step 2: Professional Selection */}
+          {activeStep === 2 && (
+            <Controller
+              name="professionalId"
+              control={control}
+              rules={{ required: 'Seleccione un profesional' }}
+              render={({ field }) => (
+                <FormControl
+                  fullWidth
+                  error={!!errors.professionalId}
+                  disabled={!selectedServiceId || isLoadingProfessionals}
+                >
+                  <InputLabel>Profesional *</InputLabel>
+                  <Select
+                    {...field}
+                    label="Profesional *"
+                  >
+                    <MenuItem value="">
+                      <em>Seleccione un profesional</em>
+                    </MenuItem>
+                    {isLoadingProfessionals && (
+                      <MenuItem disabled>Cargando profesionales...</MenuItem>
+                    )}
+                    {!isLoadingProfessionals && professionals?.length === 0 && (
+                      <MenuItem disabled>No hay profesionales disponibles</MenuItem>
+                    )}
+                    {professionals?.map((prof) => (
+                      <MenuItem key={prof.id} value={prof.id}>
+                        {prof.firstName} {prof.lastName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors.professionalId && (
+                    <Typography variant="caption" sx={{ color: '#DC2626', marginTop: 0.5 }}>
+                      {errors.professionalId.message}
+                    </Typography>
+                  )}
+                </FormControl>
+              )}
+            />
+          )}
+
+          {/* Step 3: Date and Time Selection */}
+          {activeStep === 3 && (
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name="date"
+                  control={control}
+                  rules={{ required: 'Seleccione una fecha' }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Fecha *"
+                      type="date"
+                      fullWidth
+                      variant="outlined"
+                      error={!!errors.date}
+                      helperText={errors.date?.message}
+                      disabled={!selectedProfessionalId}
+                      inputProps={{
+                        min: minDate,
+                      }}
+                      InputLabelProps={{
+                        shrink: true,
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <Controller
+                  name="time"
+                  control={control}
+                  rules={{ required: 'Seleccione un horario' }}
+                  render={({ field }) => (
+                    <FormControl
+                      fullWidth
+                      error={!!errors.time}
+                      disabled={isLoadingSlots || !availableSlots || availableSlots.length === 0}
+                    >
+                      <InputLabel>Horario *</InputLabel>
+                      <Select
+                        {...field}
+                        label="Horario *"
+                      >
+                        <MenuItem value="">
+                          <em>Seleccione horario</em>
+                        </MenuItem>
+                        {isLoadingSlots && (
+                          <MenuItem disabled>Cargando horarios...</MenuItem>
+                        )}
+                        {!isLoadingSlots && availableSlots?.length === 0 && (
+                          <MenuItem disabled>No hay horarios disponibles</MenuItem>
+                        )}
+                        {availableSlots?.map((slot) => (
+                          <MenuItem key={slot} value={slot}>
+                            {slot}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {errors.time && (
+                        <Typography variant="caption" sx={{ color: '#DC2626', marginTop: 0.5 }}>
+                          {errors.time.message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Summary Card (visible on last step) */}
+          {activeStep === 3 && (
+            <Paper
+              sx={{
+                padding: 3,
+                marginTop: 4,
+                marginBottom: 3,
+                backgroundColor: '#F8FAFC',
+                border: '1px solid #E5E7EB',
+                borderRadius: 1,
+              }}
             >
-              <option value="">-- Seleccione una mascota --</option>
-              {isLoadingDisplayPets && <option>Cargando mascotas...</option>}
-              {!isLoadingDisplayPets && displayPets?.length === 0 && (
-                <option disabled>No hay mascotas disponibles</option>
-              )}
-              {displayPets?.map(pet => (
-                <option key={pet.id} value={pet.id}>
-                  {pet.name} ({pet.species?.name || 'Especie desconocida'})
-                </option>
-              ))}
-            </select>
-            {errors.petId && (
-              <p className="text-sm text-red-500 font-medium">{errors.petId.message}</p>
-            )}
-          </div>
+              <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, color: '#1F2937' }}>
+                📋 Resumen de tu Cita
+              </Typography>
 
-          {/* Service Selection */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <Stethoscope className="w-4 h-4 text-indigo-600" />
-              Servicio
-            </label>
-            <select
-              {...register('serviceId', { required: 'Seleccione un servicio' })}
-              disabled={isLoadingServices}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-            >
-              <option value="">-- Seleccione un servicio --</option>
-              {isLoadingServices && <option>Cargando servicios...</option>}
-              {!isLoadingServices && services?.length === 0 && (
-                <option disabled>No hay servicios disponibles</option>
-              )}
-              {services?.map(service => (
-                <option key={service.id} value={service.id}>
-                  {service.name} (S/ {Number(service.price || 0).toFixed(2)})
-                </option>
-              ))}
-            </select>
-            {errors.serviceId && (
-              <p className="text-sm text-red-500 font-medium">{errors.serviceId.message}</p>
-            )}
-          </div>
-
-          {/* Professional Selection */}
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-              <User className="w-4 h-4 text-indigo-600" />
-              Profesional
-            </label>
-            <select
-              {...register('professionalId', { required: 'Seleccione un profesional' })}
-              disabled={!selectedServiceId || isLoadingProfessionals}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-            >
-              <option value="">-- Seleccione un profesional --</option>
-              {isLoadingProfessionals && <option>Cargando profesionales...</option>}
-              {!isLoadingProfessionals && professionals?.length === 0 && (
-                <option disabled>No hay profesionales disponibles</option>
-              )}
-              {professionals?.map(prof => (
-                <option key={prof.id} value={prof.id}>
-                  {prof.firstName} {prof.lastName}
-                </option>
-              ))}
-            </select>
-            {errors.professionalId && (
-              <p className="text-sm text-red-500 font-medium">{errors.professionalId.message}</p>
-            )}
-          </div>
-
-          {/* Date and Time Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Calendar className="w-4 h-4 text-indigo-600" />
-                Fecha
-              </label>
-              <input
-                type="date"
-                {...register('date', { required: 'Seleccione una fecha' })}
-                disabled={!selectedProfessionalId}
-                min={minDate}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-              />
-              {errors.date && (
-                <p className="text-sm text-red-500 font-medium">{errors.date.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Clock className="w-4 h-4 text-indigo-600" />
-                Horario
-              </label>
-              <select
-                {...register('time', { required: 'Seleccione un horario' })}
-                disabled={isLoadingSlots || !availableSlots || availableSlots.length === 0}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
-              >
-                <option value="">-- Seleccione horario --</option>
-                {isLoadingSlots && <option>Cargando horarios...</option>}
-                {!isLoadingSlots && availableSlots?.length === 0 && (
-                  <option disabled>No hay horarios disponibles</option>
+              <Box sx={{ space: 2 }}>
+                {selectedClientData && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1.5 }}>
+                    <Typography variant="body2" color="textSecondary">
+                      Propietario:
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {selectedClientData.firstName} {selectedClientData.lastName}
+                    </Typography>
+                  </Box>
                 )}
-                {availableSlots?.map(slot => (
-                  <option key={slot} value={slot}>
-                    {slot}
-                  </option>
-                ))}
-              </select>
-              {errors.time && (
-                <p className="text-sm text-red-500 font-medium">{errors.time.message}</p>
-              )}
-            </div>
-          </div>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1.5 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Mascota:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedPetData?.name}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1.5 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Servicio:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedServiceData?.name}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1.5 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Profesional:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedProfessionalData?.firstName} {selectedProfessionalData?.lastName}
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1.5 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Fecha:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {selectedDate}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1.5 }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Hora:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {watch('time')}
+                  </Typography>
+                </Box>
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="textSecondary">
+                    Precio:
+                  </Typography>
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#059669' }}>
+                    S/ {Number(selectedServiceData?.price || 0).toFixed(2)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
+          )}
 
           {/* Information Banner */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm text-amber-800 flex items-start gap-2">
-              <span className="text-lg mt-0.5">ℹ️</span>
-              <span>
-                <strong>Nota:</strong> El horario es referencial. Se recomienda llegar 30 minutos
-                antes de la hora agendada.
-              </span>
-            </p>
-          </div>
+          <Alert severity="warning" sx={{ marginTop: 3, borderRadius: 1 }}>
+            <Typography variant="body2">
+              <strong>Nota:</strong> El horario es referencial. Se recomienda llegar 30 minutos antes de la hora agendada.
+            </Typography>
+          </Alert>
 
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={isLoading || mutation.isPending}
-            className="w-full px-6 py-3 font-bold text-white bg-gradient-to-r from-indigo-600 to-indigo-700 rounded-lg hover:from-indigo-700 hover:to-indigo-800 transition disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
-          >
-            <DollarSign className="w-5 h-5" />
-            {isLoading || mutation.isPending ? 'Validando disponibilidad...' : 'Proceder al Pago'}
-          </button>
-        </form>
+          {/* Navigation Buttons */}
+          <Box sx={{ display: 'flex', gap: 2, marginTop: 4, justifyContent: 'space-between' }}>
+            <Button
+              variant="outlined"
+              onClick={handleBack}
+              disabled={activeStep === 0 || isLoading}
+              startIcon={<NavigateBeforeIcon />}
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              Anterior
+            </Button>
 
-        {/* Footer Note */}
-        <p className="text-center text-gray-500 text-sm mt-6">
-          ¿Problemas? Contacte a nuestro equipo de soporte
-        </p>
-      </div>
-    </div>
+            {activeStep < steps.length - 1 ? (
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                disabled={!canProceed || isLoading}
+                endIcon={<NavigateNextIcon />}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
+              >
+                Siguiente
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={!isStep3Complete || isLoading || mutation.isPending}
+                startIcon={
+                  isLoading || mutation.isPending ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <CheckCircleIcon />
+                  )
+                }
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
+              >
+                {isLoading || mutation.isPending ? 'Validando...' : 'Proceder al Pago'}
+              </Button>
+            )}
+          </Box>
+        </Box>
+      </Card>
+
+      {/* Footer Note */}
+      <Typography
+        variant="body2"
+        color="textSecondary"
+        sx={{ textAlign: 'center', marginTop: 3 }}
+      >
+        ¿Problemas? Contacte a nuestro equipo de soporte
+      </Typography>
+    </Container>
   );
 }

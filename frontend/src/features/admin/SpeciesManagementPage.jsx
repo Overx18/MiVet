@@ -1,22 +1,56 @@
-// frontend/src/features/admin/SpeciesManagementPage.jsx
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo } from 'react';
 import toast from 'react-hot-toast';
+import {
+  Box,
+  Card,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  CircularProgress,
+  Alert,
+  InputAdornment,
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import {
+  Add as AddIcon,
+  Search as SearchIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Save as SaveIcon,
+  Close as CloseIcon,
+  Category as CategoryIcon,
+} from '@mui/icons-material';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
-import { Button } from '../../components/ui/button';
-import { Edit2, Trash2, PlusCircle, Loader2, Save, X } from 'lucide-react';
 
 // --- API Functions ---
 const fetchSpecies = (token) =>
-  apiClient.get('/species', { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
+  apiClient
+    .get('/species', { headers: { Authorization: `Bearer ${token}` } })
+    .then((res) => res.data);
 
 const addSpecies = ({ speciesData, token }) =>
-  apiClient.post('/species', speciesData, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
+  apiClient
+    .post('/species', speciesData, { headers: { Authorization: `Bearer ${token}` } })
+    .then((res) => res.data);
 
 const updateSpecies = ({ id, speciesData, token }) =>
-  apiClient.put(`/species/${id}`, speciesData, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
+  apiClient
+    .put(`/species/${id}`, speciesData, { headers: { Authorization: `Bearer ${token}` } })
+    .then((res) => res.data);
 
 const removeSpecies = ({ id, token }) =>
   apiClient.delete(`/species/${id}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -24,19 +58,26 @@ const removeSpecies = ({ id, token }) =>
 export default function SpeciesManagementPage() {
   const { token } = useAuthStore();
   const queryClient = useQueryClient();
-  const { register, handleSubmit, reset, formState: { errors } } = useForm({
-    defaultValues: { name: '', description: '' }
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
+    defaultValues: { name: '', description: '' },
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState(null);
   const [editValues, setEditValues] = useState({ name: '', description: '' });
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedSpecies, setSelectedSpecies] = useState(null);
 
   // --- Queries ---
   const { data: species = [], isLoading, isError } = useQuery({
     queryKey: ['species'],
     queryFn: () => fetchSpecies(token),
     enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   // --- Mutations ---
@@ -72,6 +113,8 @@ export default function SpeciesManagementPage() {
     onSuccess: () => {
       toast.success('Especie eliminada exitosamente.');
       queryClient.invalidateQueries({ queryKey: ['species'] });
+      setDeleteDialogOpen(false);
+      setSelectedSpecies(null);
     },
     onError: (err) => {
       const message = err.response?.data?.message || 'Error al eliminar la especie.';
@@ -84,9 +127,14 @@ export default function SpeciesManagementPage() {
     addMutation.mutate({ speciesData: data, token });
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar esta especie?')) {
-      deleteMutation.mutate({ id, token });
+  const handleDeleteClick = (item) => {
+    setSelectedSpecies(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (selectedSpecies) {
+      deleteMutation.mutate({ id: selectedSpecies.id, token });
     }
   };
 
@@ -100,10 +148,10 @@ export default function SpeciesManagementPage() {
       toast.error('El nombre no puede estar vacío.');
       return;
     }
-    updateMutation.mutate({ 
-      id: editingId, 
-      speciesData: editValues, 
-      token 
+    updateMutation.mutate({
+      id: editingId,
+      speciesData: editValues,
+      token,
     });
   };
 
@@ -114,212 +162,415 @@ export default function SpeciesManagementPage() {
 
   // --- Filtered Species ---
   const filteredSpecies = useMemo(() => {
-    return species.filter((item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
+    return species.filter(
+      (item) =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
     );
   }, [species, searchTerm]);
 
-  // --- Loading State ---
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center py-20">
-        <Loader2 className="w-6 h-6 animate-spin text-blue-600 mr-2" />
-        <span className="text-gray-600">Cargando especies...</span>
-      </div>
+      <Container maxWidth="lg" sx={{ paddingY: 4 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress />
+        </Box>
+      </Container>
     );
   }
 
-  // --- Error State ---
   if (isError) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-        <p className="text-red-700">Error al cargar las especies. Por favor, intenta nuevamente.</p>
-      </div>
+      <Container maxWidth="lg" sx={{ paddingY: 4 }}>
+        <Alert severity="error">
+          Error al cargar las especies. Por favor, intenta nuevamente.
+        </Alert>
+      </Container>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      {/* --- Formulario de Creación --- */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2 text-gray-800">
-          <PlusCircle className="w-6 h-6 text-blue-600" />
-          Añadir Nueva Especie
-        </h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
-              Nombre <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Ej: Felino domestico"
-              {...register('name', { 
-                required: 'El nombre es obligatorio',
-                minLength: { value: 2, message: 'Mínimo 2 caracteres' }
-              })}
-              className={`w-full px-4 py-2 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.name ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-gray-400'
-              }`}
-            />
-            {errors.name && (
-              <p className="text-sm text-red-600 mt-1">{errors.name.message}</p>
-            )}
-          </div>
-          <div>
-            <label className="block text-sm font-semibold mb-2 text-gray-700">
-              Descripción
-            </label>
-            <input
-              type="text"
-              placeholder="Ej: Características, hábitat..."
-              {...register('description', {
-                maxLength: { value: 255, message: 'Máximo 255 caracteres' }
-              })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            {errors.description && (
-              <p className="text-sm text-red-600 mt-1">{errors.description.message}</p>
-            )}
-          </div>
-          <div className="md:col-span-2 flex justify-end gap-2">
-            <Button 
-              type="submit" 
-              disabled={addMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {addMutation.isPending ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  Añadiendo...
-                </>
-              ) : (
-                'Añadir Especie'
-              )}
-            </Button>
-          </div>
-        </form>
-      </div>
+    <Container maxWidth="lg" sx={{ paddingY: 4 }}>
+      {/* Header */}
+      <Box sx={{ marginBottom: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
+          <CategoryIcon sx={{ fontSize: 32, color: '#1E40AF' }} />
+          <Typography
+            variant="h1"
+            sx={{
+              color: '#1F2937',
+              fontSize: { xs: '1.75rem', md: '2.5rem' },
+              fontWeight: 700,
+            }}
+          >
+            Catálogo de Especies
+          </Typography>
+        </Box>
+        <Typography variant="body1" color="textSecondary">
+          Gestiona las especies disponibles en el sistema
+        </Typography>
+      </Box>
 
-      {/* --- Lista de Especies --- */}
-      <div className="bg-white shadow-sm border border-gray-200 rounded-lg p-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">Catálogo de Especies</h2>
-          <div className="w-full sm:w-auto">
-            <input
-              type="text"
+      {/* Stats Card */}
+      <Card
+        sx={{
+          padding: 2.5,
+          marginBottom: 4,
+          borderRadius: 2,
+          border: '1px solid #E5E7EB',
+          backgroundColor: '#F8FAFC',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1E40AF' }}>
+              {species.length}
+            </Typography>
+            <Typography variant="caption" color="textSecondary">
+              Total de Especies
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="caption" color="textSecondary">
+              {filteredSpecies.length} coincidencias
+            </Typography>
+          </Box>
+        </Box>
+      </Card>
+
+      {/* Formulario de Creación */}
+      <Card
+        sx={{
+          padding: 3,
+          marginBottom: 4,
+          borderRadius: 2,
+          border: '1px solid #E5E7EB',
+          backgroundColor: '#FFFFFF',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 3 }}>
+          <AddIcon sx={{ color: '#1E40AF', fontSize: 28 }} />
+          <Typography variant="h5" sx={{ fontWeight: 600, color: '#1F2937' }}>
+            Añadir Nueva Especie
+          </Typography>
+        </Box>
+
+        <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+          <Grid container spacing={2.5} sx={{ marginBottom: 3 }}>
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="name"
+                control={control}
+                rules={{
+                  required: 'El nombre es obligatorio',
+                  minLength: {
+                    value: 2,
+                    message: 'Mínimo 2 caracteres',
+                  },
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Nombre de la Especie"
+                    fullWidth
+                    placeholder="Ej: Felino domestico"
+                    variant="outlined"
+                    error={!!errors.name}
+                    helperText={errors.name?.message}
+                    disabled={addMutation.isPending}
+                  />
+                )}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Controller
+                name="description"
+                control={control}
+                rules={{
+                  maxLength: {
+                    value: 255,
+                    message: 'Máximo 255 caracteres',
+                  },
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Descripción"
+                    fullWidth
+                    placeholder="Ej: Características, hábitat..."
+                    variant="outlined"
+                    error={!!errors.description}
+                    helperText={errors.description?.message}
+                    disabled={addMutation.isPending}
+                  />
+                )}
+              />
+            </Grid>
+          </Grid>
+
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={addMutation.isPending}
+            startIcon={
+              addMutation.isPending ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <AddIcon />
+              )
+            }
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            {addMutation.isPending ? 'Añadiendo...' : 'Añadir Especie'}
+          </Button>
+        </Box>
+      </Card>
+
+      {/* Lista de Especies */}
+      <Card
+        sx={{
+          borderRadius: 2,
+          border: '1px solid #E5E7EB',
+          overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
+        }}
+      >
+        {/* Header con búsqueda */}
+        <Box
+          sx={{
+            padding: 3,
+            borderBottom: '1px solid #E5E7EB',
+            backgroundColor: '#FFFFFF',
+          }}
+        >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h5" sx={{ fontWeight: 600, color: '#1F2937' }}>
+              Especies Registradas
+            </Typography>
+            <TextField
+              size="small"
               placeholder="Buscar por nombre o descripción..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full sm:w-64 px-4 py-2 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: '#6B7280' }} />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                width: { xs: '100%', sm: '300px' },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 1,
+                },
+              }}
             />
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        {/* --- Empty State --- */}
+        {/* Empty State */}
         {filteredSpecies.length === 0 ? (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">
-              {species.length === 0 
-                ? 'No hay especies registradas aún.' 
+          <Box sx={{ textAlign: 'center', paddingY: 6 }}>
+            <CategoryIcon
+              sx={{
+                fontSize: 48,
+                color: '#D1D5DB',
+                marginBottom: 2,
+              }}
+            />
+            <Typography variant="body1" color="textSecondary">
+              {species.length === 0
+                ? 'No hay especies registradas aún.'
                 : 'No se encontraron especies con ese término de búsqueda.'}
-            </p>
-          </div>
+            </Typography>
+          </Box>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-gray-200">
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Nombre</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700">Descripción</th>
-                  <th className="text-right py-3 px-4 font-semibold text-gray-700">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#F8FAFC' }}>
+                  <TableCell sx={{ fontWeight: 700, color: '#1F2937' }}>Nombre</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#1F2937' }}>Descripción</TableCell>
+                  <TableCell sx={{ fontWeight: 700, color: '#1F2937', textAlign: 'center' }}>
+                    Acciones
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
                 {filteredSpecies.map((item) => (
-                  <tr 
-                    key={item.id} 
-                    className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                  <TableRow
+                    key={item.id}
+                    sx={{
+                      borderBottom: '1px solid #E5E7EB',
+                      '&:hover': {
+                        backgroundColor: '#F8FAFC',
+                      },
+                    }}
                   >
-                    <td className="py-3 px-4">
+                    {/* Nombre */}
+                    <TableCell>
                       {editingId === item.id ? (
-                        <input
-                          type="text"
+                        <TextField
+                          size="small"
                           value={editValues.name}
-                          onChange={(e) => setEditValues({ ...editValues, name: e.target.value })}
-                          className="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) =>
+                            setEditValues({ ...editValues, name: e.target.value })
+                          }
+                          variant="outlined"
+                          fullWidth
+                          disabled={updateMutation.isPending}
                         />
                       ) : (
-                        <span className="font-medium text-gray-800">{item.name}</span>
+                        <Typography variant="body2" sx={{ fontWeight: 600, color: '#1F2937' }}>
+                          {item.name}
+                        </Typography>
                       )}
-                    </td>
-                    <td className="py-3 px-4">
+                    </TableCell>
+
+                    {/* Descripción */}
+                    <TableCell>
                       {editingId === item.id ? (
-                        <input
-                          type="text"
+                        <TextField
+                          size="small"
                           value={editValues.description}
-                          onChange={(e) => setEditValues({ ...editValues, description: e.target.value })}
-                          className="w-full px-2 py-1 border border-blue-500 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          onChange={(e) =>
+                            setEditValues({ ...editValues, description: e.target.value })
+                          }
+                          variant="outlined"
+                          fullWidth
+                          disabled={updateMutation.isPending}
                         />
                       ) : (
-                        <span className="text-gray-600">{item.description || '—'}</span>
+                        <Typography variant="body2" color="textSecondary">
+                          {item.description || '—'}
+                        </Typography>
                       )}
-                    </td>
-                    <td className="py-3 px-4 text-right">
+                    </TableCell>
+
+                    {/* Acciones */}
+                    <TableCell sx={{ textAlign: 'center' }}>
                       {editingId === item.id ? (
-                        <div className="flex justify-end gap-2">
-                          <button
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            color="success"
                             onClick={handleSaveEdit}
                             disabled={updateMutation.isPending}
-                            className="p-1.5 text-green-600 hover:bg-green-50 rounded transition-colors disabled:opacity-50"
-                            title="Guardar cambios"
+                            startIcon={<SaveIcon fontSize="small" />}
+                            sx={{ textTransform: 'none' }}
                           >
-                            <Save className="w-4 h-4" />
-                          </button>
-                          <button
+                            Guardar
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
                             onClick={handleCancelEdit}
                             disabled={updateMutation.isPending}
-                            className="p-1.5 text-gray-600 hover:bg-gray-200 rounded transition-colors"
-                            title="Cancelar edición"
+                            startIcon={<CloseIcon fontSize="small" />}
+                            sx={{ textTransform: 'none' }}
                           >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </div>
+                            Cancelar
+                          </Button>
+                        </Box>
                       ) : (
-                        <div className="flex justify-end gap-2">
-                          <button
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+                          <Button
+                            size="small"
+                            color="primary"
                             onClick={() => handleEdit(item)}
-                            className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                            title="Editar especie"
+                            startIcon={<EditIcon fontSize="small" />}
+                            sx={{ textTransform: 'none' }}
                           >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id)}
-                            disabled={deleteMutation.isPending}
-                            className="p-1.5 text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-                            title="Eliminar especie"
+                            Editar
+                          </Button>
+                          <Button
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteClick(item)}
+                            startIcon={<DeleteIcon fontSize="small" />}
+                            sx={{ textTransform: 'none' }}
                           >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                            Eliminar
+                          </Button>
+                        </Box>
                       )}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+            </Table>
+          </TableContainer>
         )}
 
-        {/* --- Results Count --- */}
+        {/* Results Count */}
         {filteredSpecies.length > 0 && (
-          <div className="mt-4 text-sm text-gray-600 text-right">
-            Mostrando {filteredSpecies.length} de {species.length} especies
-          </div>
+          <Box
+            sx={{
+              padding: 2,
+              textAlign: 'right',
+              borderTop: '1px solid #E5E7EB',
+              backgroundColor: '#F8FAFC',
+            }}
+          >
+            <Typography variant="caption" color="textSecondary" sx={{ fontWeight: 500 }}>
+              Mostrando {filteredSpecies.length} de {species.length} especies
+            </Typography>
+          </Box>
         )}
-      </div>
-    </div>
+      </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: 600, color: '#1F2937' }}>
+          Eliminar Especie
+        </DialogTitle>
+        <DialogContent sx={{ paddingY: 3 }}>
+          <Alert severity="warning" sx={{ marginBottom: 2 }}>
+            <Typography variant="body2">
+              Esta acción no se puede deshacer. La especie será eliminada permanentemente.
+            </Typography>
+          </Alert>
+          <Typography variant="body2">
+            ¿Estás seguro de que deseas eliminar la especie{' '}
+            <strong>{selectedSpecies?.name}</strong>?
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ padding: 2, gap: 1 }}>
+          <Button
+            onClick={() => setDeleteDialogOpen(false)}
+            variant="outlined"
+            disabled={deleteMutation.isPending}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            variant="contained"
+            color="error"
+            disabled={deleteMutation.isPending}
+            startIcon={
+              deleteMutation.isPending ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                <DeleteIcon />
+              )
+            }
+          >
+            {deleteMutation.isPending ? 'Eliminando...' : 'Eliminar Especie'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 }
