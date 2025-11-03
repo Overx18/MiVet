@@ -11,13 +11,13 @@ const router = Router();
 router.use(protect);
 
 // GET /api/appointments -> Obtener citas para el calendario
-router.get('/', getAppointments);
+router.get('/', authorize('Cliente', 'Recepcionista', 'Veterinario', 'Groomer'), getAppointments);
 
 // Endpoint para obtener horarios disponibles
-router.get('/availability', getAvailableSlots);
+router.get('/availability', authorize('Cliente', 'Recepcionista'), getAvailableSlots);
 
 // GET /api/appointments/professionals -> Obtener profesionales
-router.get('/professionals', getProfessionalsByServiceType);
+router.get('/professionals', authorize('Cliente', 'Recepcionista'), getProfessionalsByServiceType);
 
 // POST /api/appointments -> Crear una cita
 router.post('/', authorize('Cliente', 'Recepcionista'), createAppointment);
@@ -26,6 +26,6 @@ router.post('/', authorize('Cliente', 'Recepcionista'), createAppointment);
 router.patch('/:id/reschedule', authorize('Recepcionista', 'Admin', 'Cliente'), rescheduleAppointment);
 
 // PATCH /api/appointments/:id/cancel -> Cancelar una cita
-router.patch('/:id/cancel', cancelAppointment);
+router.patch('/:id/cancel', authorize('Recepcionista', 'Admin', 'Cliente'), cancelAppointment);
 
 export default router;

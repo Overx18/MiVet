@@ -133,3 +133,53 @@ export const updateStock = async (req, res, next) => {
     next(error);
   }
 };
+
+// [Admin, Recepcionista] Actualizar un producto
+export const updateProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { name, description, price, provider, expiryDate } = req.body;
+
+    const product = await Product.findByPk(id);
+    if (!product) {
+      return next(createError(404, 'Producto no encontrado.'));
+    }
+
+    // Validación de datos
+    if (price !== undefined && isNaN(parseFloat(price))) {
+      return next(createError(400, 'El precio debe ser un número válido.'));
+    }
+
+    await product.update({
+      name: name || product.name,
+      description: description || product.description,
+      price: price || product.price,
+      provider: provider || product.provider,
+      expiryDate: expiryDate || product.expiryDate,
+    });
+
+    res.json({ message: 'Producto actualizado correctamente.', product });
+  } catch (error) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return next(createError(409, 'Un producto con ese nombre ya existe.'));
+    }
+    next(error);
+  }
+};
+
+// [Admin, Recepcionista] Eliminar un producto
+export const deleteProduct = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findByPk(id);
+    if (!product) {
+      return next(createError(404, 'Producto no encontrado.'));
+    }
+
+    await product.destroy();
+    res.json({ message: 'Producto eliminado correctamente.' });
+  } catch (error) {
+    next(error);
+  }
+};

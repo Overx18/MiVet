@@ -4,6 +4,7 @@ import { format, parse, startOfWeek, getDay } from 'date-fns';
 import es from 'date-fns/locale/es';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { Link } from 'react-router-dom';
 import {
   Box,
   Card,
@@ -754,6 +755,14 @@ export default function AppointmentsCalendarPage() {
           >
             Cerrar
           </Button>
+
+          {/* Botón para registrar historial médico */}
+          {selectedAppointment && selectedAppointment.status !== 'Cancelada' && !selectedAppointment.medicalRecord && ['Veterinario', 'Groomer'].includes(user?.role) && (
+          <Button component={Link} to={`/medical-record/form/${selectedAppointment.id}` } variant="contained" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border rounded-md"
+          >
+            {selectedAppointment.medicalRecord ? 'Editar Historial' : 'Registrar Historial'}
+          </Button>
+          )}
         </DialogActions>
       </Dialog>
 

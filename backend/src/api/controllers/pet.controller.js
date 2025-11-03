@@ -47,58 +47,6 @@ export const createPet = async (req, res, next) => {
   }
 };
 
-// [Cliente, Recepcionista, Veterinario] Actualizar una mascota
-export const updatePet = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const pet = await Pet.findByPk(id);
-
-    if (!pet) return next(createError(404, 'Mascota no encontrada.'));
-
-    // Verificar permisos
-    if (req.user.role === 'Cliente' && pet.ownerId !== req.user.id) {
-      return next(createError(403, 'No tienes permiso para modificar esta mascota.'));
-    }
-
-    // Campos a actualizar
-    const { name, speciesId, race, age, weight, gender, birthDate, notes, ownerId } = req.body;
-
-    // Si el usuario es Recepcionista o Admin y se pasa un ownerId, lo actualiza
-    if (req.user.role === 'Admin' || req.user.role === 'Recepcionista') {
-      await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes, ownerId });
-    } else {
-      await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes });
-    }
-
-    res.status(200).json(pet);
-  } catch (error) {
-    console.error('Error en updatePet:', error);
-    next(error);
-  }
-};
-
-
-// [Cliente, Recepcionista, Veterinario] Eliminar una mascota (borrado lógico)
-export const deletePet = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const pet = await Pet.findByPk(id);
-
-    if (!pet) return next(createError(404, 'Mascota no encontrada.'));
-
-    if (req.user.role === 'Cliente' && pet.ownerId !== req.user.id) {
-      return next(createError(403, 'No tienes permiso para eliminar esta mascota.'));
-    }
-
-    pet.isActive = false;
-    await pet.save();
-
-    res.status(204).send(); // No Content
-  } catch (error) {
-    next(error);
-  }
-};
-
 // [Todos los autenticados] Obtener lista de mascotas con filtros, paginación y ordenamiento
 export const getAllPets = async (req, res, next) => {
   try {
@@ -163,7 +111,6 @@ export const getAllPets = async (req, res, next) => {
   }
 };
 
-
 // [Todos los autenticados] Obtener una mascota por ID
 export const getPet = async (req, res, next) => {
   try {
@@ -187,3 +134,56 @@ export const getPet = async (req, res, next) => {
     next(error);
   }
 };
+
+// [Cliente, Recepcionista, Admin] Actualizar una mascota
+export const updatePet = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const pet = await Pet.findByPk(id);
+
+    if (!pet) return next(createError(404, 'Mascota no encontrada.'));
+
+    // Verificar permisos
+    if (req.user.role === 'Cliente' && pet.ownerId !== req.user.id) {
+      return next(createError(403, 'No tienes permiso para modificar esta mascota.'));
+    }
+
+    // Campos a actualizar
+    const { name, speciesId, race, age, weight, gender, birthDate, notes, ownerId } = req.body;
+
+    // Si el usuario es Recepcionista o Admin y se pasa un ownerId, lo actualiza
+    if (req.user.role === 'Admin' || req.user.role === 'Recepcionista') {
+      await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes, ownerId });
+    } else {
+      await pet.update({ name, speciesId, race, age, weight, gender, birthDate, notes });
+    }
+
+    res.status(200).json(pet);
+  } catch (error) {
+    console.error('Error en updatePet:', error);
+    next(error);
+  }
+};
+
+
+// [Recepcionista, Admin] Eliminar una mascota (borrado lógico)
+export const deletePet = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const pet = await Pet.findByPk(id);
+
+    if (!pet) return next(createError(404, 'Mascota no encontrada.'));
+
+    if (req.user.role === 'Cliente' && pet.ownerId !== req.user.id) {
+      return next(createError(403, 'No tienes permiso para desactivar esta mascota.'));
+    }
+
+    pet.isActive = false;
+    await pet.save();
+
+    res.status(204).send(); // No Content
+  } catch (error) {
+    next(error);
+  }
+};
+

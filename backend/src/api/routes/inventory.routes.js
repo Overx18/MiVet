@@ -1,1 +1,0 @@
-//Rutas para /api/inventory

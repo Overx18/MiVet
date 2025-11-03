@@ -10,10 +10,6 @@ const router = Router();
 // Proteger todas las rutas de mascotas
 router.use(protect);
 
-const allowedToCreate = authorize('Cliente', 'Recepcionista', 'Admin');
-const allowedToModify = authorize('Cliente', 'Recepcionista', 'Veterinario', 'Admin');
-
-
 // GET /api/pets -> Listar todas las mascotas (con filtros y paginación)
 router.get('/', getAllPets);
 
@@ -21,12 +17,12 @@ router.get('/', getAllPets);
 router.post('/', authorize('Cliente', 'Recepcionista', 'Admin'), createPet);
 
 // GET /api/pets -> Listar una mascota por ID
-router.get('/:id', getPet);
+router.get('/:id', authorize('Cliente', 'Recepcionista', 'Admin', 'Groomer'), getPet);
 
 // PUT /api/pets/:id -> Actualizar una mascota
-router.put('/:id', allowedToModify, updatePet);
+router.put('/:id', authorize('Cliente', 'Recepcionista', 'Admin'), updatePet);
 
 // DELETE /api/pets/:id -> Eliminar una mascota (borrado lógico)
-router.delete('/:id', allowedToModify, deletePet);
+router.delete('/:id', authorize('Recepcionista', 'Admin'), deletePet);
 
 export default router;

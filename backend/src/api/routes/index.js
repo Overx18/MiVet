@@ -9,10 +9,13 @@ import appointmentRoutes from './appointment.routes.js';
 import paymentRoutes from './payment.routes.js';
 import productRoutes from './product.routes.js'; 
 import salesRoutes from './sales.routes.js';
+import medicalRecordRoutes from './medicalRecord.routes.js';
+import dashboardRoutes from './dashboard.routes.js';
 
 const router = Router();
 
 router.use('/auth', authRoutes);
+router.use('/dashboard', dashboardRoutes);
 router.use('/users', userRoutes);
 router.use('/species', speciesRoutes);
 router.use('/pets', petRoutes);
@@ -21,5 +24,6 @@ router.use('/appointments', appointmentRoutes);
 router.use('/payments', paymentRoutes);
 router.use('/products', productRoutes); 
 router.use('/sales', salesRoutes);
+router.use('/medical-records', medicalRecordRoutes);
 
 export default router;

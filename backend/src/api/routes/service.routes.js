@@ -14,9 +14,8 @@ router.use(protect);
 router.get('/', getAllServices);
 
 // La creación, actualización y eliminación es solo para administradores
-const adminOnly = authorize('Admin');
-router.post('/', adminOnly, createService);
-router.put('/:id', adminOnly, updateService);
-router.delete('/:id', adminOnly, deleteService);
+router.post('/', authorize('Admin'), createService);
+router.put('/:id', authorize('Admin'), updateService);
+router.delete('/:id', authorize('Admin'), deleteService);
 
 export default router;

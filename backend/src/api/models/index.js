@@ -12,6 +12,7 @@ import MedicalRecordModel from './medicalRecord.model.js';
 import StockTransactionModel from './stockTransaction.model.js';
 import SaleModel from './sale.model.js';
 import SaleDetailModel from './saleDetail.model.js';
+import MedicalRecordProductModel from './medicalRecordProduct.model.js';
 
 const db = {};
 
@@ -29,6 +30,7 @@ db.MedicalRecord = MedicalRecordModel(sequelize);
 db.StockTransaction = StockTransactionModel(sequelize);
 db.Sale = SaleModel(sequelize);
 db.SaleDetail = SaleDetailModel(sequelize);
+db.MedicalRecordProduct = MedicalRecordProductModel(sequelize);
 
 // Definición de Asociaciones
 
@@ -55,6 +57,10 @@ db.Appointment.belongsTo(db.User, { foreignKey: 'professionalId', as: 'professio
 // Cita tiene un Historial Médico
 db.Appointment.hasOne(db.MedicalRecord, { foreignKey: 'appointmentId', as: 'medicalRecord' });
 db.MedicalRecord.belongsTo(db.Appointment, { foreignKey: 'appointmentId', as: 'appointment' });
+
+// Nueva relación: Historial Médico y Productos (Medicamentos usados)
+db.MedicalRecord.belongsToMany(db.Product, { through: db.MedicalRecordProduct, foreignKey: 'medicalRecordId', as: 'products' });
+db.Product.belongsToMany(db.MedicalRecord, { through: db.MedicalRecordProduct, foreignKey: 'productId', as: 'medicalRecords' });
 
 // Producto tiene muchas Transacciones de Stock
 db.Product.hasMany(db.StockTransaction, { foreignKey: 'productId', as: 'stockTransactions' });

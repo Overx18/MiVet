@@ -9,12 +9,19 @@ import {
   Alert,
   Typography,
   Paper,
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import {
   Payment as PaymentIcon,
   CheckCircle as CheckCircleIcon,
   ErrorOutline as ErrorOutlineIcon,
   Warning as WarningIcon,
+  Close as CloseIcon,
+  ArrowBack as ArrowBackIcon,
 } from '@mui/icons-material';
 
 export default function CheckoutForm({ appointmentId, totalPrice }) {
@@ -25,6 +32,7 @@ export default function CheckoutForm({ appointmentId, totalPrice }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
 
   // Validar que los datos necesarios existan
   const isDataValid = appointmentId && totalPrice && totalPrice > 0;
@@ -143,6 +151,24 @@ export default function CheckoutForm({ appointmentId, totalPrice }) {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Manejar cancelación
+  const handleCancelClick = () => {
+    setCancelDialogOpen(true);
+  };
+
+  const handleConfirmCancel = () => {
+    console.log('❌ Usuario canceló la operación de pago');
+    toast('Operación cancelada. Retornando para agendar cita...'); // notificación simple
+    setCancelDialogOpen(false);
+    
+    // Retroceder a la página anterior
+    navigate(-1);
+  };
+
+  const handleDialogClose = () => {
+    setCancelDialogOpen(false);
   };
 
   // Mostrar advertencia si los datos no son válidos
@@ -270,7 +296,7 @@ export default function CheckoutForm({ appointmentId, totalPrice }) {
               border: '1px solid #E5E7EB',
               borderRadius: 1,
               boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-              minHeight: '400px', // ← Espacio generoso para el formulario de Stripe
+              minHeight: '520px',
               display: 'flex',
               flexDirection: 'column',
             }}
@@ -354,50 +380,125 @@ export default function CheckoutForm({ appointmentId, totalPrice }) {
             </Typography>
           </Paper>
 
-          {/* Submit Button */}
-          <Button
-            type="submit"
-            id="submit"
-            variant="contained"
-            fullWidth
-            disabled={isLoading || !stripe || !elements || showDataWarning}
-            size="large"
-            startIcon={
-              isLoading ? (
-                <CircularProgress size={20} color="inherit" />
-              ) : (
-                <PaymentIcon />
-              )
-            }
-            sx={{
-              textTransform: 'none',
-              fontWeight: 600,
-              padding: '14px 24px',
-              fontSize: '1rem',
-              backgroundColor: '#1E40AF',
-              '&:hover:not(:disabled)': {
-                backgroundColor: '#1E3A8A',
-                boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
-              },
-              '&:disabled': {
-                backgroundColor: '#D1D5DB',
-                color: '#9CA3AF',
-              },
-              transition: 'all 0.3s ease',
-            }}
-          >
-            <span id="button-text">
-              {isLoading ? (
-                <>
-                  Procesando pago...
-                </>
-              ) : isDataValid ? (
-                `Pagar ahora S/ ${Number(totalPrice).toFixed(2)}`
-              ) : (
-                'Datos inválidos'
-              )}
-            </span>
-          </Button>
+          {/* Price Summary */}
+          {totalPrice && isDataValid && (
+            <Paper
+              sx={{
+                padding: 2.5,
+                backgroundColor: '#EFF6FF',
+                border: '1px solid #BFDBFE',
+                borderRadius: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontWeight: 600,
+                    color: '#1F2937',
+                  }}
+                >
+                  Monto Total:
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#1E40AF',
+                    fontSize: '1.5rem',
+                  }}
+                >
+                  S/ {Number(totalPrice).toFixed(2)}
+                </Typography>
+              </Box>
+            </Paper>
+          )}
+
+          {/* Buttons Grid - Pagar y Cancelar */}
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <Button
+                type="submit"
+                id="submit"
+                variant="contained"
+                fullWidth
+                disabled={isLoading || !stripe || !elements || showDataWarning}
+                size="large"
+                startIcon={
+                  isLoading ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <PaymentIcon />
+                  )
+                }
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  padding: '14px 24px',
+                  fontSize: '1rem',
+                  backgroundColor: '#1E40AF',
+                  '&:hover:not(:disabled)': {
+                    backgroundColor: '#1E3A8A',
+                    boxShadow: '0 4px 12px rgba(30, 64, 175, 0.3)',
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#D1D5DB',
+                    color: '#9CA3AF',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <span id="button-text">
+                  {isLoading ? (
+                    <>
+                      Procesando pago...
+                    </>
+                  ) : isDataValid ? (
+                    `Pagar ahora S/ ${Number(totalPrice).toFixed(2)}`
+                  ) : (
+                    'Datos inválidos'
+                  )}
+                </span>
+              </Button>
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <Button
+                type="button"
+                variant="outlined"
+                fullWidth
+                size="large"
+                disabled={isLoading}
+                onClick={handleCancelClick}
+                startIcon={<ArrowBackIcon />}
+                sx={{
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  padding: '14px 24px',
+                  fontSize: '1rem',
+                  color: '#DC2626',
+                  borderColor: '#DC2626',
+                  '&:hover:not(:disabled)': {
+                    backgroundColor: '#FEE2E2',
+                    borderColor: '#DC2626',
+                  },
+                  '&:disabled': {
+                    color: '#9CA3AF',
+                    borderColor: '#D1D5DB',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                Cancelar Operación
+              </Button>
+            </Grid>
+          </Grid>
 
           {/* Support Note */}
           <Alert
@@ -439,8 +540,97 @@ export default function CheckoutForm({ appointmentId, totalPrice }) {
             </Typography>
           </Paper>
 
+          {/* Debug Info (solo en desarrollo) */}
+          {import.meta.env.DEV && (
+            <Paper
+              sx={{
+                padding: 2,
+                backgroundColor: '#FEF3C7',
+                border: '1px solid #FBBF24',
+                borderRadius: 1,
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  fontFamily: 'monospace',
+                  fontSize: '0.75rem',
+                  color: '#92400E',
+                }}
+              >
+                <strong>🔧 Debug Info:</strong>
+                <br />
+                appointmentId: {appointmentId || 'undefined'}
+                <br />
+                totalPrice: {totalPrice || 'undefined'}
+                <br />
+                stripe: {stripe ? '✓' : '✗'}
+                <br />
+                elements: {elements ? '✓' : '✗'}
+              </Typography>
+            </Paper>
+          )}
         </>
       )}
+
+      {/* Dialog de Confirmación de Cancelación */}
+      <Dialog
+        open={cancelDialogOpen}
+        onClose={handleDialogClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle
+          sx={{
+            fontWeight: 600,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            backgroundColor: '#FEF2F2',
+            color: '#DC2626',
+          }}
+        >
+          <CloseIcon />
+          Cancelar Pago
+        </DialogTitle>
+
+        <DialogContent sx={{ paddingY: 3 }}>
+          <Alert severity="warning" sx={{ marginBottom: 2 }}>
+            <Typography variant="body2">
+              ⚠️ Si cancelas ahora, deberás agendar una nueva cita y volver a pagar.
+            </Typography>
+          </Alert>
+
+          <Typography variant="body2" color="textSecondary">
+            ¿Estás seguro de que deseas cancelar esta operación de pago?
+          </Typography>
+
+          <Typography
+            variant="caption"
+            color="textSecondary"
+            sx={{ display: 'block', marginTop: 2, fontStyle: 'italic' }}
+          >
+            Se retornará a la página anterior sin procesar el pago.
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ padding: 2, gap: 1 }}>
+          <Button
+            onClick={handleDialogClose}
+            variant="outlined"
+          >
+            Continuar Pagando
+          </Button>
+          <Button
+            onClick={handleConfirmCancel}
+            variant="contained"
+            color="error"
+            startIcon={<ArrowBackIcon />}
+          >
+            Sí, Cancelar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

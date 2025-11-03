@@ -89,9 +89,10 @@ export const createAppointmentAndPaymentIntent = async (req, res, next) => {
     }
 
     // 4. Calcular precios
-    const servicePrice = parseFloat(service.price) || 0;
-    const igv = servicePrice * 0.18;
-    const totalPrice = servicePrice + igv;
+    const totalPrice = parseFloat(service.price);
+    const igv = totalPrice * 0.18;
+    const servicePrice = totalPrice * 0.82 || 0;
+
     const amountInCents = Math.round(totalPrice * 100);
 
     // 5. Crear el PaymentIntent con metadatos completos

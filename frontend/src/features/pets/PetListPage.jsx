@@ -35,6 +35,7 @@ import {
   Delete as DeleteIcon,
   Info as InfoIcon,
 } from '@mui/icons-material';
+import HistoryIcon from '@mui/icons-material/History';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -341,11 +342,6 @@ export default function PetListPage() {
                     <TableCell sx={{ fontWeight: 700, color: '#1F2937', textAlign: 'center' }}>
                       Estado
                     </TableCell>
-                    {canEditOrDelete && (
-                      <TableCell sx={{ fontWeight: 700, color: '#1F2937', textAlign: 'center' }}>
-                        Acciones
-                      </TableCell>
-                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -435,25 +431,28 @@ export default function PetListPage() {
                               variant="outlined"
                               color="primary"
                               startIcon={<EditIcon fontSize="small" />}
-                              sx={{
-                                textTransform: 'none',
-                                fontWeight: 500,
-                              }}
                             >
                               Editar
                             </Button>
+
+                            <Button
+                              component={RouterLink}
+                              to={`/pets/${pet.id}/history`}
+                              size="small"
+                              variant="outlined"
+                              color="secondary"
+                              startIcon={<HistoryIcon fontSize="small" />}
+                            >
+                              Historial
+                            </Button>
+
                             {pet.isActive && (
                               <Button
                                 size="small"
                                 variant="outlined"
                                 color="error"
                                 onClick={() => handleDeleteClick(pet)}
-                                disabled={deleteMutation.isPending}
                                 startIcon={<DeleteIcon fontSize="small" />}
-                                sx={{
-                                  textTransform: 'none',
-                                  fontWeight: 500,
-                                }}
                               >
                                 Desactivar
                               </Button>
@@ -461,6 +460,7 @@ export default function PetListPage() {
                           </Box>
                         </TableCell>
                       )}
+
                     </TableRow>
                   ))}
                 </TableBody>

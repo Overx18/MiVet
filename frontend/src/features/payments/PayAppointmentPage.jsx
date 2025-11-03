@@ -85,7 +85,7 @@ export default function PayAppointmentPage() {
   const cleanAppointmentData = {
     ...appointmentData,
     servicePrice: Number(appointmentData.servicePrice) || 0,
-    igv: Number(appointmentData.igv) || (Number(appointmentData.servicePrice) * 0.18),
+    igv: Number(appointmentData.igv) || 0,
     totalPrice:
       Number(appointmentData.totalPrice) ||
       (Number(appointmentData.servicePrice) + Number(appointmentData.igv || 0)),

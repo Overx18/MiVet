@@ -8,13 +8,6 @@ const router = Router();
 
 router.use(protect);
 
-/**
- * Rutas para la gestión de especies
- * Roles:
- *  - Cliente, Veterinario, Recepcionista: pueden ver la lista
- *  - Admin: puede crear, actualizar y eliminar
- */
-
 //  Obtener todas las especies (para registrar mascotas, etc.)
 router.get('/', getAllSpecies);
 

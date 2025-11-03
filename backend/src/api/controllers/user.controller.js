@@ -52,8 +52,8 @@ export const getAllUsers = async (req, res, next) => {
     const { role } = req.query;
     const filter = {};
 
-    // Si es recepcionista, solo puede ver clientes
-    if (req.user.role === 'Recepcionista' ) {
+    // Si es recepcionista o veterinario, solo puede ver clientes
+    if (req.user.role === 'Recepcionista' || req.user.role === 'Veterinario') {
       filter.role = 'Cliente';
     } else if (role) {
       filter.role = role;

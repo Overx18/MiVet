@@ -36,7 +36,7 @@ export default function PaymentSuccess() {
     // Comprueba el estado Y si el toast ya se mostró
     if (status === 'succeeded' && !toastShownRef.current) {
       toastShownRef.current = true; // Marca el toast como mostrado
-      toast.success('✓ Pago realizado correctamente');
+      toast.success('Pago realizado correctamente');
 
       // Redirigir después de 3 segundos
       redirectTimerRef.current = setTimeout(() => {
@@ -332,8 +332,7 @@ export default function PaymentSuccess() {
                 Redirigiendo a tu calendario...
               </Typography>
               <LinearProgress
-                variant="determinate"
-                value={100}
+                variant="indeterminate"
                 sx={{
                   height: 8,
                   borderRadius: 1,

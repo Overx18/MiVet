@@ -11,7 +11,7 @@ const registerValidation = [
   body('firstName').notEmpty().withMessage('El nombre es obligatorio.'),
   body('lastName').notEmpty().withMessage('El apellido es obligatorio.'),
   body('email').isEmail().withMessage('Debe ser un correo electrónico válido.'),
-  body('password').isLength({ min: 6 }).withMessage('La contraseña debe tener al menos 6 caracteres.'),
+  body('password').isLength({ min: 8 }).withMessage('La contraseña debe tener al menos 8 caracteres.'),
 ];
 
 // Definición de validaciones para el login
@@ -28,6 +28,6 @@ router.post('/login', loginValidation, login);
 // Ruta para solicitar recuperación de contraseña
 router.post('/forgot-password', [body('email').isEmail()], forgotPassword);
 // Ruta para restablecer la contraseña con el token
-router.patch('/reset-password/:token', [body('password').isLength({ min: 6 })], resetPassword);
+router.patch('/reset-password/:token', [body('password').isLength({ min: 8 })], resetPassword);
 
 export default router;
