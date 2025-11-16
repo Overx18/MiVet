@@ -9,6 +9,7 @@ const Appointment = db.Appointment;
 const Service = db.Service;
 const User = db.User;
 const Pet = db.Pet;
+const MedicalRecord = db.MedicalRecord;
 
 // [Cliente, Recepcionista] Crear una nueva cita
 export const createAppointment = async (req, res, next) => {
@@ -217,6 +218,12 @@ export const getAppointments = async (req, res, next) => {
         },
         { model: Service, as: 'service', attributes: ['name', 'duration', 'type'] },
         { model: User, as: 'professional', attributes: ['id', 'firstName', 'lastName'] },
+        {
+        model: MedicalRecord,
+        as: 'medicalRecord',
+        attributes: ['id'], // Optimización: solo traemos el id
+        required: false // Es un LEFT JOIN, trae la cita aunque no tenga historial
+        }
       ],
       order: [['dateTime', 'ASC']],
     });

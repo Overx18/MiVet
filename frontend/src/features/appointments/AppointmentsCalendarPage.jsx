@@ -37,7 +37,7 @@ import {
   ChevronRight as ChevronRightIcon,
   Today as TodayIcon,
 } from '@mui/icons-material';
-
+import MenuItem from '@mui/material/MenuItem';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
@@ -756,12 +756,19 @@ export default function AppointmentsCalendarPage() {
             Cerrar
           </Button>
 
-          {/* Botón para registrar historial médico */}
-          {selectedAppointment && selectedAppointment.status !== 'Cancelada' && !selectedAppointment.medicalRecord && ['Veterinario', 'Groomer'].includes(user?.role) && (
-          <Button component={Link} to={`/medical-record/form/${selectedAppointment.id}` } variant="contained" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border rounded-md"
-          >
-            {selectedAppointment.medicalRecord ? 'Editar Historial' : 'Registrar Historial'}
-          </Button>
+          {/* Botón para registrar/editar historial médico */}
+          {selectedAppointment && 
+           selectedAppointment.status !== 'Cancelada' && 
+           ['Veterinario', 'Groomer'].includes(user?.role) && (
+            <Button 
+              component={Link} 
+              to={`/medical-record/form/${selectedAppointment.id}`} 
+              variant="contained"
+              color="secondary" // Un color distintivo
+            >
+              {/* [SOLUCIÓN] Lógica para el texto del botón */}
+              {selectedAppointment.medicalRecord ? 'Editar Historial' : 'Registrar Historial'}
+            </Button>
           )}
         </DialogActions>
       </Dialog>

@@ -9,20 +9,25 @@ const { MedicalRecord, Product, StockTransaction, Appointment, User, Pet, Servic
 export const getMedicalRecordByAppointmentId = async (req, res, next) => {
   try {
     const { appointmentId } = req.params;
-    const medicalRecord = await MedicalRecord.findOne({
+    const record = await MedicalRecord.findOne({
       where: { appointmentId },
-      include: [{
-        model: Product,
-        as: 'products',
-        through: { attributes: ['quantityUsed'] },
-      }],
+      include: [
+        {
+          model: Product,
+          as: 'products',
+          through: { attributes: ['quantityUsed'] }, // Incluir detalles de la tabla intermedia
+        },
+      ],
     });
 
-    if (!medicalRecord) {
-      return next(createError(404, 'No se encontró un historial médico para esta cita.'));
+    // [SOLUCIÓN CLAVE]
+    // Si no se encuentra el registro, no es un error.
+    // Simplemente significa que es nuevo. Devolvemos 200 con null.
+    if (!record) {
+      return res.status(200).json(null);
     }
 
-    res.status(200).json(medicalRecord);
+    res.status(200).json(record);
   } catch (error) {
     console.error("Error al obtener historial médico:", error);
     next(error);

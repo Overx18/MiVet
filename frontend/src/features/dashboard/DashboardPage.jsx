@@ -7,6 +7,7 @@ import apiClient from '../../api/axios';
 import AdminDashboard from './AdminDashboard';
 import ClientDashboard from './ClientDashboard';
 import ProfessionalDashboard from './ProfessionalDashboard';
+import ReceptionistDashboard from './ReceptionistDashboard';
 
 const fetchDashboardData = (token) => apiClient.get('/dashboard', { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
 

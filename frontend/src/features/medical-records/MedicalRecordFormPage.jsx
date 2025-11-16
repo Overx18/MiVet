@@ -1,13 +1,19 @@
 // frontend/src/features/medical-records/MedicalRecordPage.jsx
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react'; // Añadido useState
 import { useForm, Controller, useFieldArray } from 'react-hook-form';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import {
-  Container, Typography, Card, Grid, TextField, Button, Box, Autocomplete, IconButton, Paper
+  Container, Typography, Card, Grid, TextField, Button, Box, Autocomplete, IconButton, Paper,
+  // Estos son los nuevos para el diálogo y la grabación
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, CircularProgress
 } from '@mui/material';
-import { Save as SaveIcon, Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { 
+  Save as SaveIcon, Add as AddIcon, Delete as DeleteIcon, 
+  // ¡Especialmente estos íconos!
+  Mic as MicIcon, Stop as StopIcon 
+} from '@mui/icons-material';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -15,15 +21,17 @@ import { useAuthStore } from '../../store/auth.store';
 const fetchRecord = (appointmentId, token) => apiClient.get(`/medical-records/by-appointment/${appointmentId}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
 const upsertRecord = ({ recordData, token }) => apiClient.post('/medical-records', recordData, { headers: { Authorization: `Bearer ${token}` } });
 
+
 export default function MedicalRecordPage() {
   const { appointmentId } = useParams();
   const navigate = useNavigate();
   const { token } = useAuthStore();
 
-  const { control, handleSubmit, reset } = useForm({
+  // Añadido setValue para que la mutación de audio pueda rellenar el formulario
+  const { control, handleSubmit, reset, setValue } = useForm({
     defaultValues: { diagnosis: '', treatment: '', notes: '', productsUsed: [] },
   });
-
+  
   // API fetch para los productos
   const fetchProducts = (token) =>
     apiClient
@@ -41,7 +49,6 @@ export default function MedicalRecordPage() {
     queryKey: ['medicalRecord', appointmentId],
     queryFn: () => fetchRecord(appointmentId, token),
     enabled: !!appointmentId && !!token,
-    retry: false, // No reintentar si da 404 (significa que no existe)
   });
 
   // Efecto para poblar el formulario si se encuentra un registro existente
@@ -84,12 +91,20 @@ export default function MedicalRecordPage() {
   
   if (isLoadingRecord) return <div>Cargando historial...</div>;
 
+    // Determinar si estamos en modo edición
+  const isEditMode = !!existingRecord;
+
   return (
     <Container maxWidth="md" sx={{ paddingY: 4 }}>
       <Card sx={{ padding: 4 }}>
-        <Typography variant="h4" gutterBottom>
-          {existingRecord ? 'Editar Historial de Cita' : 'Registrar Historial de Cita'}
-        </Typography>
+        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" gutterBottom>
+            {/* Título dinámico conservado del archivo original */}
+            {isEditMode ? 'Editar Historial Médico' : 'Registrar Nuevo Historial Médico'}
+          </Typography>
+        </Box>
+
         <form onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={3}>
             <Grid item xs={12}>

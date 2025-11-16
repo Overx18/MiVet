@@ -28,4 +28,7 @@ export const config = {
     webhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
   },
+  huggingface: {
+    apiToken: process.env.HUGGINGFACE_API_TOKEN,
+  },
 };
