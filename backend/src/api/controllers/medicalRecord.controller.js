@@ -36,7 +36,7 @@ export const getMedicalRecordByAppointmentId = async (req, res, next) => {
 
 // Crear o actualizar un historial médico
 export const upsertMedicalRecord = async (req, res, next) => {
-  const { appointmentId, diagnosis, treatment, notes, productsUsed } = req.body;
+  const { appointmentId, diagnosis, treatment, notes, transcription, productsUsed } = req.body;
   const userId = req.user.id;
 
   if (!appointmentId) {
@@ -79,6 +79,9 @@ export const upsertMedicalRecord = async (req, res, next) => {
       medicalRecord.diagnosis = diagnosis;
       medicalRecord.treatment = treatment;
       medicalRecord.notes = notes;
+      if (transcription !== undefined) {
+        medicalRecord.transcription = transcription;
+      }
       await medicalRecord.save({ transaction: t });
 
       // Limpiar las asociaciones previas
@@ -87,7 +90,11 @@ export const upsertMedicalRecord = async (req, res, next) => {
     } else {
       // Crear un nuevo historial
       medicalRecord = await MedicalRecord.create({
-        appointmentId, diagnosis, treatment, notes,
+        appointmentId, 
+        diagnosis, 
+        treatment, 
+        notes,
+        transcription: transcription || null,
       }, { transaction: t });
     }
 

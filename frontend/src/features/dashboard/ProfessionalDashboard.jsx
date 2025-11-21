@@ -8,6 +8,7 @@ import {
   Info as InfoIcon,
   Schedule as ScheduleIcon,
   ArrowRight as ArrowRightIcon,
+  Mic as MicIcon,
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
 import WelcomeHeader from './components/WelcomeHeader';
@@ -283,36 +284,64 @@ export default function ProfessionalDashboard({ data, user }) {
 
           {/* Tab 3: Registros Médicos */}
           {tabValue === 2 && (
-            <Paper
-              sx={{
-                p: 3,
-                textAlign: 'center',
-                backgroundColor: '#F9FAFB',
-                border: '1px dashed #D1D5DB',
-              }}
-            >
-              <MedicalServicesIcon sx={{ fontSize: 48, color: '#D1D5DB', mb: 1 }} />
-              <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600, mb: 1 }}>
-                Accede a los registros médicos de tus pacientes
-              </Typography>
-              <Button
-                component={Link}
-                to="/medical-records"
-                variant="contained"
-                size="small"
-                endIcon={<ArrowRightIcon />}
+            <Box>
+              <Paper
                 sx={{
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  backgroundColor: '#1E40AF',
-                  '&:hover': {
-                    backgroundColor: '#1E3A8A',
-                  },
+                  p: 3,
+                  mb: 2,
+                  backgroundColor: '#E8EAF6',
+                  border: '1px solid #3F51B5',
                 }}
               >
-                Ver Registros
-              </Button>
-            </Paper>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <MicIcon sx={{ color: '#3F51B5', fontSize: 28 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#3F51B5' }}>
+                    Documentación Clínica Automatizada
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ mb: 2, color: '#212121' }}>
+                  Graba la conversación durante las consultas para generar automáticamente
+                  diagnóstico, tratamiento y notas usando inteligencia artificial. Ahorra tiempo
+                  administrativo y mantén registros detallados.
+                </Typography>
+                <Alert severity="info" sx={{ mb: 2, borderRadius: 1 }}>
+                  <Typography variant="caption">
+                    Esta funcionalidad está disponible al crear o editar un historial médico.
+                    Requiere consentimiento del cliente antes de iniciar la grabación.
+                  </Typography>
+                </Alert>
+              </Paper>
+              <Paper
+                sx={{
+                  p: 3,
+                  textAlign: 'center',
+                  backgroundColor: '#F9FAFB',
+                  border: '1px dashed #D1D5DB',
+                }}
+              >
+                <MedicalServicesIcon sx={{ fontSize: 48, color: '#D1D5DB', mb: 1 }} />
+                <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600, mb: 1 }}>
+                  Accede a los registros médicos de tus pacientes
+                </Typography>
+                <Button
+                  component={Link}
+                  to="/medical-records"
+                  variant="contained"
+                  size="small"
+                  endIcon={<ArrowRightIcon />}
+                  sx={{
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    backgroundColor: '#1E40AF',
+                    '&:hover': {
+                      backgroundColor: '#1E3A8A',
+                    },
+                  }}
+                >
+                  Ver Registros
+                </Button>
+              </Paper>
+            </Box>
           )}
         </Box>
       </Card>
@@ -412,6 +441,32 @@ export default function ProfessionalDashboard({ data, user }) {
             </Button>
           </Grid>
         </Grid>
+        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid #BBEF63' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: '#059669' }}>
+            🤖 Nueva Funcionalidad: Documentación Automatizada
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2, color: '#1F2937' }}>
+            Usa la documentación clínica automatizada para generar registros médicos
+            automáticamente desde grabaciones de audio durante las consultas. Disponible
+            al crear o editar un historial médico.
+          </Typography>
+          <Button
+            component={Link}
+            to="/appointments/calendar"
+            variant="contained"
+            startIcon={<MicIcon />}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              backgroundColor: '#3F51B5',
+              '&:hover': {
+                backgroundColor: '#303F9F',
+              },
+            }}
+          >
+            Probar Documentación Automatizada
+          </Button>
+        </Box>
       </Paper>
     </Container>
   );

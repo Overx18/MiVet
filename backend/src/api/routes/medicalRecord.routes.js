@@ -2,11 +2,14 @@
 
 // backend/src/api/routes/medicalRecord.routes.js
 import { Router } from 'express';
+
 import { upsertMedicalRecord, getMedicalRecordByAppointmentId, getPetMedicalHistory } from '../controllers/medicalRecord.controller.js';
+import { processAudioTranscription } from '../controllers/audioDocumentation.controller.js';
 import { protect } from '../../middlewares/auth.middleware.js';
 import { authorize } from '../../middlewares/role.middleware.js';
 
 const router = Router();
+
 
 router.use(protect);
 
@@ -18,5 +21,8 @@ router.get('/by-appointment/:appointmentId', authorize('Veterinario', 'Groomer',
 
 // Obtener historial completo de una mascota (Todos los roles autenticados, la lógica de permisos está en el controller)
 router.get('/by-pet/:petId', authorize('Veterinario', 'Groomer', 'Admin', 'Cliente'), getPetMedicalHistory);
+
+// Procesar transcripción de audio (texto ya transcrito) para documentación automatizada (Veterinario, Groomer, Admin)
+router.post('/process-audio', authorize('Veterinario', 'Groomer', 'Admin'), processAudioTranscription);
 
 export default router;

@@ -29,6 +29,6 @@ export const config = {
     publishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
   },
   huggingface: {
-    apiToken: process.env.HUGGINGFACE_API_TOKEN,
+    apiToken: process.env.HUGGINGFACE_API_KEY,
   },
 };

@@ -21,6 +21,18 @@ export default (sequelize) => {
     notes: {
       type: DataTypes.TEXT,
     },
+    transcription: {
+      type: DataTypes.TEXT,
+      comment: 'Transcripción completa de la conversación durante la consulta',
+    },
+    appointmentId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'Appointments',
+        key: 'id',
+      },
+    },
   }, {
     sequelize,
     modelName: 'MedicalRecord',
