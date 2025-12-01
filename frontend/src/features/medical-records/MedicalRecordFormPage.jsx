@@ -9,11 +9,11 @@ import {
 } from '@mui/material';
 import { 
   Save as SaveIcon, Add as AddIcon, Delete as DeleteIcon, 
-  Mic as MicIcon, MedicalServices as MedicalServicesIcon,
+  Mic as MicIcon,
 } from '@mui/icons-material';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
-import AudioRecordingDialog from './AudioRecordingDialog';
+import AudioRecordingDialog from '../../components/medical-records/AudioRecordingDialog';
 
 // API Functions
 const fetchRecord = (appointmentId, token) => apiClient.get(`/medical-records/by-appointment/${appointmentId}`, { headers: { Authorization: `Bearer ${token}` } }).then(res => res.data);
@@ -25,10 +25,8 @@ export default function MedicalRecordPage() {
   const navigate = useNavigate();
   const { token } = useAuthStore();
   const [audioDialogOpen, setAudioDialogOpen] = useState(false);
-  
-  // [SOLUCIÓN] Añadir el estado faltante para la transcripción
-  const [transcription, setTranscription] = useState('');
 
+  // Añadido setValue para que la mutación de audio pueda rellenar el formulario
   const { control, handleSubmit, reset, setValue } = useForm({
     defaultValues: { diagnosis: '', treatment: '', notes: '', productsUsed: [] },
   });
@@ -86,7 +84,7 @@ export default function MedicalRecordPage() {
     const submissionData = {
       ...data,
       appointmentId,
-      transcription: transcription || null, // Ahora está definido
+      transcription: transcription || null, // Incluir la transcripción completa
       productsUsed: data.productsUsed.map(p => ({
         productId: p.product.id,
         quantityUsed: Number(p.quantityUsed),
@@ -106,11 +104,10 @@ export default function MedicalRecordPage() {
     if (data.notes) {
       setValue('notes', data.notes);
     }
-    // Guardar la transcripción completa
+    // Guardar la transcripción completa (se guarda en BD pero no se muestra en el formulario)
     if (data.transcription) {
       setTranscription(data.transcription);
     }
-    
     toast.success('Campos rellenados automáticamente. Por favor, revisa y edita según sea necesario.');
   };
   
@@ -121,26 +118,12 @@ export default function MedicalRecordPage() {
 
   return (
     <Container maxWidth="lg" sx={{ paddingY: 4 }}>
-      <Card sx={{ padding: 4, borderRadius: 2, border: '1px solid #E5E7EB' }}>
+      <Card sx={{ padding: 4 }}>
         
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
-          <MedicalServicesIcon sx={{ fontSize: 32, color: '#1E40AF' }} />
-          <Box>
-            <Typography 
-              variant="h1" 
-              sx={{ 
-                color: '#1F2937', 
-                fontSize: { xs: '1.75rem', md: '2.5rem' }, 
-                fontWeight: 700,
-                mb: 0.5 
-              }}
-            >
-              {isEditMode ? 'Editar Historial Médico' : 'Registrar Nuevo Historial Médico'}
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Documenta la consulta veterinaria con IA o manualmente
-            </Typography>
-          </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" gutterBottom>
+            {isEditMode ? 'Editar Historial Médico' : 'Registrar Nuevo Historial Médico'}
+          </Typography>
         </Box>
 
         {/* Botón de Documentación Automatizada */}
@@ -311,26 +294,17 @@ export default function MedicalRecordPage() {
               </Button>
             </Box>
 
-            {/* Botones de Acción */}
-            <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+            {/* Botón Guardar */}
+            <Box>
               <Button 
                 type="submit" 
                 variant="contained" 
                 startIcon={<SaveIcon />} 
                 disabled={mutation.isPending}
                 size="large"
-                sx={{ minWidth: 200, textTransform: 'none', fontWeight: 600 }}
+                sx={{ minWidth: 200 }}
               >
                 {mutation.isPending ? 'Guardando...' : 'Guardar Historial'}
-              </Button>
-              <Button 
-                variant="outlined"
-                onClick={() => navigate('/appointments/calendar')}
-                disabled={mutation.isPending}
-                size="large"
-                sx={{ textTransform: 'none', fontWeight: 600 }}
-              >
-                Cancelar
               </Button>
             </Box>
           </Box>

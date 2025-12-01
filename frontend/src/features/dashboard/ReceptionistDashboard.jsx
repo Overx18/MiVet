@@ -1,503 +1,297 @@
-// frontend/src/features/dashboard/ReceptionistDashboard.jsx
-import { useState } from 'react';
-import { 
-  Container, 
-  Grid, 
-  Card, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  ListItemAvatar, 
-  Avatar, 
-  Box, 
-  Button, 
-  Paper, 
-  Chip, 
-  Alert,
-  Tab,
-  Tabs,
-  Divider,
-  IconButton
-} from '@mui/material';
-import {
-  Event as EventIcon,
-  Inventory as InventoryIcon,
-  Payment as PaymentIcon,
-  CheckCircle as CheckCircleIcon,
-  Warning as WarningIcon,
-  Schedule as ScheduleIcon,
-  Person as PersonIcon,
-  Pets as PetsIcon,
-  Phone as PhoneIcon,
-  AccessTime as AccessTimeIcon,
-  ShoppingCart as ShoppingCartIcon,
-  TrendingUp as TrendingUpIcon,
-  AttachMoney as MoneyIcon
-} from '@mui/icons-material';
+import { useMemo, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import WelcomeHeader from '../../components/dashboard/WelcomeHeader';
-import StatCard from '../../components/ui/StatCard';
+import {
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Chip,
+  TextField,
+  InputAdornment,
+  CircularProgress,
+  Alert,
+  Divider,
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import PointOfSaleIcon from '@mui/icons-material/PointOfSale';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import CancelIcon from '@mui/icons-material/Cancel';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import PetsIcon from '@mui/icons-material/Pets';
+import PersonIcon from '@mui/icons-material/Person';
+import apiClient from '../../api/axios';
+import { useAuthStore } from '../../store/auth.store';
 
-export default function ReceptionistDashboard({ data, user }) {
-  const [tabValue, setTabValue] = useState(0);
+// API: obtener citas por rango (mismo patrón que AppointmentsCalendarPage.jsx)
+const fetchAppointments = (range, token) => {
+  const params = new URLSearchParams(range).toString();
+  return apiClient
+    .get(`/appointments?${params}`, { headers: { Authorization: `Bearer ${token}` } })
+    .then((res) => res.data)
+    .catch(() => []);
+};
 
-  const formatDate = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+export default function ReceptionistDashboard({ user }) {
+  const { token } = useAuthStore();
+
+  // Rango: hoy (00:00 - 23:59)
+  const today = new Date();
+  const start = new Date(today);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(today);
+  end.setHours(23, 59, 59, 999);
+
+  const { data: todayAppointments = [], isLoading, isError } = useQuery({
+    queryKey: ['appointments', 'today'],
+    queryFn: () =>
+      fetchAppointments(
+        { start: start.toISOString(), end: end.toISOString() },
+        token
+      ),
+    enabled: !!token,
+  });
+
+  // Búsqueda rápida en la tabla
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return todayAppointments;
+    return todayAppointments.filter((a) => {
+      const ownerName = `${a.pet?.owner?.firstName || ''} ${a.pet?.owner?.lastName || ''}`.toLowerCase();
+      return (
+        (a.service?.name || '').toLowerCase().includes(q) ||
+        (a.pet?.name || '').toLowerCase().includes(q) ||
+        (a.professional?.firstName || '').toLowerCase().includes(q) ||
+        (a.professional?.lastName || '').toLowerCase().includes(q) ||
+        ownerName.includes(q)
+      );
     });
+  }, [search, todayAppointments]);
+
+  // KPIs
+  const kpis = useMemo(() => {
+    const total = todayAppointments.length;
+    const pagadas = todayAppointments.filter((a) => a.status === 'Pagada').length;
+    const completadas = todayAppointments.filter((a) => a.status === 'Completada').length;
+    const canceladas = todayAppointments.filter((a) => a.status === 'Cancelada').length;
+    return { total, pagadas, completadas, canceladas };
+  }, [todayAppointments]);
+
+  const statusChip = (status) => {
+    const map = {
+      Pagada: { color: 'success', icon: <DoneAllIcon sx={{ fontSize: 16 }} /> },
+      Completada: { color: 'default', icon: <DoneAllIcon sx={{ fontSize: 16 }} /> },
+      Cancelada: { color: 'error', icon: <CancelIcon sx={{ fontSize: 16 }} /> },
+    };
+    const cfg = map[status] || { color: 'default' };
+    return (
+      <Chip
+        size="small"
+        color={cfg.color}
+        variant="outlined"
+        icon={cfg.icon || null}
+        label={status}
+      />
+    );
   };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const formatCurrency = (amount) => `S/ ${parseFloat(amount).toFixed(2)}`;
-
-  const stats = data?.stats || {};
-  const todayAppointments = data?.todayAppointments || [];
-  const lowStockProducts = data?.lowStockProducts || [];
-  const pendingPayments = data?.pendingPayments || [];
-  const recentSales = data?.recentSales || [];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <WelcomeHeader user={user} />
-
-      {/* Alert Informativo */}
-      <Alert severity="info" icon={<EventIcon />} sx={{ mb: 3, borderRadius: 2 }}>
-        <Typography variant="body2">
-          <strong>📋 Panel de Recepción:</strong> Gestiona citas, controla pagos y supervisa el inventario.
+    <Box>
+      {/* Encabezado */}
+      <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+        <CalendarMonthIcon sx={{ fontSize: 32, color: '#1E40AF' }} />
+        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1F2937' }}>
+          Dashboard de Recepción
         </Typography>
-      </Alert>
+      </Box>
 
-      {/* KPIs Principales */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard 
-            title="Citas Pendientes" 
-            value={stats.pendingAppointmentsCount || 0}
-            icon={EventIcon} 
-            color="#3F51B5"
-            subtitle="Programadas y confirmadas"
-          />
+      {/* Acciones rápidas */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={3}>
+          <Button
+            fullWidth
+            component={Link}
+            to="/appointments/new"
+            variant="contained"
+            startIcon={<EventAvailableIcon />}
+          >
+            Programar Cita
+          </Button>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard 
-            title="Citas de Hoy" 
-            value={stats.todayAppointmentsCount || 0}
-            icon={ScheduleIcon} 
-            color="#059669"
-            subtitle={`${stats.completedPaymentsToday || 0} pagadas`}
-          />
+        <Grid item xs={12} md={3}>
+          <Button
+            fullWidth
+            component={Link}
+            to="/appointments/calendar"
+            variant="outlined"
+            startIcon={<CalendarMonthIcon />}
+          >
+            Ver Calendario
+          </Button>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard 
-            title="Stock Bajo" 
-            value={stats.lowStockCount || 0}
-            icon={WarningIcon} 
-            color="#F59E0B"
-            subtitle={`${stats.criticalStockCount || 0} críticos`}
-          />
+        <Grid item xs={12} md={3}>
+          <Button
+            fullWidth
+            component={Link}
+            to="/pos"
+            variant="contained"
+            color="secondary"
+            startIcon={<PointOfSaleIcon />}
+          >
+            Punto de Venta
+          </Button>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard 
-            title="Pagos Pendientes" 
-            value={stats.pendingPaymentsCount || 0}
-            icon={PaymentIcon} 
-            color={stats.pendingPaymentsCount > 0 ? "#EF4444" : "#10B981"}
-            subtitle="Requieren atención"
-          />
+        <Grid item xs={12} md={3}>
+          <Button
+            fullWidth
+            component={Link}
+            to="/pets"
+            variant="outlined"
+            startIcon={<PetsIcon />}
+          >
+            Mascotas/Clientes
+          </Button>
         </Grid>
       </Grid>
 
-      {/* Tabs de Contenido */}
-      <Card sx={{ borderRadius: 2, border: '1px solid #E5E7EB', overflow: 'hidden', mb: 4 }}>
-        <Tabs
-          value={tabValue}
-          onChange={(e, newValue) => setTabValue(newValue)}
-          variant="fullWidth"
-          sx={{
-            backgroundColor: '#F8FAFC',
-            borderBottom: '1px solid #E5E7EB',
-            '& .MuiTab-root': {
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.95rem',
-              color: '#6B7280',
-              '&.Mui-selected': {
-                color: '#3F51B5',
-              },
-            },
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#3F51B5',
-            },
-          }}
-        >
-          <Tab label="Citas de Hoy" icon={<EventIcon />} iconPosition="start" />
-          <Tab label="Pagos Pendientes" icon={<PaymentIcon />} iconPosition="start" />
-          <Tab label="Stock Bajo" icon={<InventoryIcon />} iconPosition="start" />
-          <Tab label="Ventas Recientes" icon={<ShoppingCartIcon />} iconPosition="start" />
-        </Tabs>
+      {/* KPIs del día */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="overline" color="text.secondary">
+                Citas Hoy
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>{kpis.total}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                <AccessTimeIcon fontSize="small" color="action" />
+                <Typography variant="caption" color="text.secondary">
+                  {new Date().toLocaleDateString('es-PE')}
+                </Typography>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        <Box sx={{ p: 3 }}>
-          {/* Tab 1: Citas de Hoy */}
-          {tabValue === 0 && (
-            <Box>
-              {todayAppointments.length > 0 ? (
-                <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {todayAppointments.map((app) => (
-                    <Paper
-                      key={app.id}
-                      sx={{
-                        p: 2.5,
-                        borderRadius: 2,
-                        border: '1px solid #E5E7EB',
-                        backgroundColor: '#F9FAFB',
-                        '&:hover': {
-                          backgroundColor: '#F3F4F6',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Avatar
-                          src={app.pet.photoUrl}
-                          sx={{ width: 56, height: 56, backgroundColor: '#EFF6FF' }}
-                        >
-                          <PetsIcon sx={{ color: '#3F51B5' }} />
-                        </Avatar>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="body1" sx={{ fontWeight: 700, color: '#1F2937', mb: 0.5 }}>
-                            {app.pet.name} - {app.service.name}
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="overline" color="text.secondary">
+                Pagadas
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: '#059669' }}>{kpis.pagadas}</Typography>
+              <Typography variant="caption" color="text.secondary">Citas con pago confirmado</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="overline" color="text.secondary">
+                Completadas
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700 }}>{kpis.completadas}</Typography>
+              <Typography variant="caption" color="text.secondary">Atenciones finalizadas</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={3}>
+          <Card>
+            <CardContent>
+              <Typography variant="overline" color="text.secondary">
+                Canceladas
+              </Typography>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: '#DC2626' }}>{kpis.canceladas}</Typography>
+              <Typography variant="caption" color="text.secondary">Citas anuladas hoy</Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Buscador y tabla simple de próximas citas (hoy) */}
+      <Card sx={{ mb: 3 }}>
+        <Box sx={{ p: 2 }}>
+          <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <LocalHospitalIcon color="primary" />
+            Próximas citas de hoy
+          </Typography>
+          <TextField
+            size="small"
+            fullWidth
+            placeholder="Buscar por servicio, mascota, profesional o propietario…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon color="action" />
+                </InputAdornment>
+              ),
+            }}
+          />
+        </Box>
+        <Divider />
+        <Box sx={{ p: 2 }}>
+          {isLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <CircularProgress />
+            </Box>
+          ) : isError ? (
+            <Alert severity="error">No se pudieron cargar las citas de hoy.</Alert>
+          ) : filtered.length === 0 ? (
+            <Alert severity="info">No hay citas que coincidan con el criterio.</Alert>
+          ) : (
+            <Grid container spacing={2}>
+              {filtered
+                .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime))
+                .slice(0, 8)
+                .map((a) => (
+                  <Grid item xs={12} key={a.id}>
+                    <Card variant="outlined">
+                      <CardContent sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr 1fr' }, gap: 2, alignItems: 'center' }}>
+                        <Box>
+                          <Typography sx={{ fontWeight: 600 }}>
+                            {new Date(a.dateTime).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })} · {a.service?.name}
                           </Typography>
-                          
-                          <Divider sx={{ my: 1.5 }} />
-                          
-                          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <PersonIcon sx={{ fontSize: 18, color: '#6B7280' }} />
-                                <Box>
-                                  <Typography variant="caption" color="textSecondary" display="block">
-                                    Cliente
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {app.client.name}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <AccessTimeIcon sx={{ fontSize: 18, color: '#6B7280' }} />
-                                <Box>
-                                  <Typography variant="caption" color="textSecondary" display="block">
-                                    Hora
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {formatTime(app.dateTime)} ({app.service.duration} min)
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <PhoneIcon sx={{ fontSize: 18, color: '#6B7280' }} />
-                                <Typography variant="body2">
-                                  {app.client.phone}
-                                </Typography>
-                              </Box>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Typography variant="caption" color="textSecondary">
-                                  Profesional:
-                                </Typography>
-                                <Chip
-                                  label={`${app.professional.name} (${app.professional.role})`}
-                                  size="small"
-                                  variant="outlined"
-                                />
-                              </Box>
-                            </Grid>
-                            <Grid item xs={12}>
-                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Chip
-                                  label={app.status}
-                                  color={app.status === 'Pagada' ? 'success' : 'warning'}
-                                  size="small"
-                                />
-                                <Typography variant="body1" sx={{ fontWeight: 700, color: '#059669' }}>
-                                  {formatCurrency(app.service.price)}
-                                </Typography>
-                              </Box>
-                            </Grid>
-                          </Grid>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  ))}
-                </List>
-              ) : (
-                <Paper
-                  sx={{
-                    p: 4,
-                    textAlign: 'center',
-                    backgroundColor: '#F9FAFB',
-                    border: '1px dashed #D1D5DB',
-                  }}
-                >
-                  <EventIcon sx={{ fontSize: 64, color: '#D1D5DB', mb: 2 }} />
-                  <Typography variant="h6" color="textSecondary" sx={{ fontWeight: 600, mb: 1 }}>
-                    No hay citas programadas para hoy
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Revisa el calendario para próximas citas
-                  </Typography>
-                </Paper>
-              )}
-            </Box>
-          )}
-
-          {/* Tab 2: Pagos Pendientes */}
-          {tabValue === 1 && (
-            <Box>
-              {pendingPayments.length > 0 ? (
-                <>
-                  <Alert severity="warning" sx={{ mb: 2, borderRadius: 1 }}>
-                    <Typography variant="body2">
-                      <strong>⚠️ Atención:</strong> Hay {pendingPayments.length} cita{pendingPayments.length !== 1 ? 's' : ''} con pago pendiente.
-                    </Typography>
-                  </Alert>
-                  <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {pendingPayments.map((payment) => (
-                      <ListItem
-                        key={payment.id}
-                        sx={{
-                          p: 2,
-                          borderRadius: 1,
-                          border: '1px solid #FED7AA',
-                          backgroundColor: '#FEF3C7',
-                          '&:hover': {
-                            backgroundColor: '#FDE68A',
-                          },
-                        }}
-                      >
-                        <ListItemAvatar>
-                          <Avatar sx={{ backgroundColor: '#F59E0B' }}>
-                            <PaymentIcon sx={{ color: '#FFFFFF' }} />
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Typography variant="body2" sx={{ fontWeight: 700, color: '#1F2937' }}>
-                              {payment.pet} - {payment.service}
-                            </Typography>
-                          }
-                          secondary={
-                            <Box component="span">
-                              <Typography component="span" variant="caption" color="textSecondary" display="block">
-                                Cliente: {payment.client.name} | {payment.client.phone}
-                              </Typography>
-                              <Typography component="span" variant="caption" color="textSecondary" display="block">
-                                Fecha: {formatDate(payment.date)}
-                              </Typography>
-                            </Box>
-                          }
-                          secondaryTypographyProps={{ component: 'span' }}
-                        />
-                        <Box sx={{ textAlign: 'right' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: '#DC2626' }}>
-                            {formatCurrency(payment.amount)}
+                          <Typography variant="body2" color="text.secondary">
+                            Duración: {a.service?.duration || 60} min
                           </Typography>
-                          <Button
-                            component={Link}
-                            to={`/appointments/pay?appointmentId=${payment.id}`}
-                            size="small"
-                            variant="contained"
-                            sx={{
-                              mt: 1,
-                              textTransform: 'none',
-                              backgroundColor: '#DC2626',
-                              '&:hover': {
-                                backgroundColor: '#B91C1C',
-                              },
-                            }}
-                          >
-                            Cobrar
-                          </Button>
                         </Box>
-                      </ListItem>
-                    ))}
-                  </List>
-                </>
-              ) : (
-                <Paper
-                  sx={{
-                    p: 3,
-                    textAlign: 'center',
-                    backgroundColor: '#F0FDF4',
-                    border: '1px solid #BBF7D0',
-                  }}
-                >
-                  <CheckCircleIcon sx={{ fontSize: 48, color: '#10B981', mb: 1 }} />
-                  <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
-                    ✓ No hay pagos pendientes
-                  </Typography>
-                </Paper>
-              )}
-            </Box>
-          )}
-
-          {/* Tab 3: Stock Bajo */}
-          {tabValue === 2 && (
-            <Box>
-              {lowStockProducts.length > 0 ? (
-                <>
-                  <Alert severity="warning" sx={{ mb: 2, borderRadius: 1 }}>
-                    <Typography variant="body2">
-                      <strong>📦 Inventario:</strong> {stats.criticalStockCount} producto{stats.criticalStockCount !== 1 ? 's' : ''} en estado crítico (menos de 5 unidades).
-                    </Typography>
-                  </Alert>
-                  <List disablePadding>
-                    {lowStockProducts.map((product, index) => (
-                      <Box key={product.id}>
-                        <ListItem sx={{ px: 0 }}>
-                          <ListItemAvatar>
-                            <Avatar
-                              sx={{
-                                backgroundColor: product.isCritical ? '#FEE2E2' : '#FEF3C7',
-                              }}
-                            >
-                              <InventoryIcon sx={{ color: product.isCritical ? '#DC2626' : '#F59E0B' }} />
-                            </Avatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={
-                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                {product.name}
-                              </Typography>
-                            }
-                            secondary={
-                              <Box component="span" sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                                <Chip
-                                  label={`${product.quantity} unidades`}
-                                  size="small"
-                                  color={product.isCritical ? 'red' : 'black'}
-                                />
-                                <Chip
-                                  label={formatCurrency(product.price)}
-                                  size="small"
-                                  variant="outlined"
-                                />
-                              </Box>
-                            }
-                            secondaryTypographyProps={{ component: 'span' }}
-                          />
-                        </ListItem>
-                        {index < lowStockProducts.length - 1 && <Divider />}
-                      </Box>
-                    ))}
-                  </List>
-                  <Button
-                    component={Link}
-                    to="/inventory"
-                    fullWidth
-                    variant="outlined"
-                    sx={{ mt: 2, textTransform: 'none', fontWeight: 600 }}
-                  >
-                    Ver Inventario Completo
-                  </Button>
-                </>
-              ) : (
-                <Paper
-                  sx={{
-                    p: 3,
-                    textAlign: 'center',
-                    backgroundColor: '#F0FDF4',
-                    border: '1px solid #BBF7D0',
-                  }}
-                >
-                  <CheckCircleIcon sx={{ fontSize: 48, color: '#10B981', mb: 1 }} />
-                  <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
-                    ✓ Inventario en buen estado
-                  </Typography>
-                </Paper>
-              )}
-            </Box>
-          )}
-
-          {/* Tab 4: Ventas Recientes */}
-          {tabValue === 3 && (
-            <Box>
-              {recentSales.length > 0 ? (
-                <List disablePadding>
-                  {recentSales.map((sale, index) => (
-                    <Box key={sale.id}>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemAvatar>
-                          <Avatar sx={{ backgroundColor: '#D1FAE5' }}>
-                            <ShoppingCartIcon sx={{ color: '#059669' }} />
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {sale.client}
-                            </Typography>
-                          }
-                          secondary={
-                            <Box component="span" sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                              <Typography component="span" variant="caption" color="textSecondary">
-                                {formatDate(sale.date)}
-                              </Typography>
-                              <Chip
-                                label={sale.paymentMethod || 'Efectivo'}
-                                size="small"
-                                variant="outlined"
-                                sx={{ height: 20 }}
-                              />
-                            </Box>
-                          }
-                          secondaryTypographyProps={{ component: 'span' }}
-                        />
-                        <Typography variant="body1" sx={{ fontWeight: 700, color: '#059669' }}>
-                          {formatCurrency(sale.amount)}
-                        </Typography>
-                      </ListItem>
-                      {index < recentSales.length - 1 && <Divider />}
-                    </Box>
-                  ))}
-                </List>
-              ) : (
-                <Paper
-                  sx={{
-                    p: 3,
-                    textAlign: 'center',
-                    backgroundColor: '#F9FAFB',
-                    border: '1px dashed #D1D5DB',
-                  }}
-                >
-                  <ShoppingCartIcon sx={{ fontSize: 48, color: '#D1D5DB', mb: 1 }} />
-                  <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
-                    No hay ventas recientes
-                  </Typography>
-                </Paper>
-              )}
-            </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PetsIcon fontSize="small" color="action" />
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>{a.pet?.name}</Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <PersonIcon fontSize="small" color="action" />
+                          <Typography variant="body2">
+                            {a.professional?.firstName} {a.professional?.lastName}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+                          {statusChip(a.status)}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+            </Grid>
           )}
         </Box>
+        <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'flex-end' }}>
+          <Button component={Link} to="/appointments/calendar" size="small">
+            Ver todo el calendario
+          </Button>
+        </Box>
       </Card>
-    </Container>
+    </Box>
   );
 }

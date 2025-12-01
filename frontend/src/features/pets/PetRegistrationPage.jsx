@@ -475,6 +475,51 @@ export default function PetRegistrationPage() {
           </Typography>
         </Alert>
       </Card>
+
+      {/* Cards de ayuda */}
+      <Grid container spacing={3} sx={{ marginTop: 4 }}>
+        <Grid item xs={12} sm={6}>
+          <Card
+            sx={{
+              padding: 2.5,
+              borderRadius: 2,
+              border: '1px solid #E5E7EB',
+              backgroundColor: '#F8FAFC',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, marginBottom: 1, color: '#1E40AF' }}>
+              📋 Información Requerida
+            </Typography>
+            <Typography variant="caption" color="textSecondary" sx={{ lineHeight: 1.6, display: 'block' }}>
+              • Nombre y especie son obligatorios<br />
+              • Los demás datos son opcionales<br />
+              • La edad se expresa en años<br />
+              • El peso en kilogramos
+            </Typography>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} sm={6}>
+          <Card
+            sx={{
+              padding: 2.5,
+              borderRadius: 2,
+              border: '1px solid #E5E7EB',
+              backgroundColor: '#F8FAFC',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ fontWeight: 600, marginBottom: 1, color: '#059669' }}>
+              🐾 Consejo
+            </Typography>
+            <Typography variant="caption" color="textSecondary" sx={{ lineHeight: 1.6, display: 'block' }}>
+              • Usa notas para datos especiales<br />
+              • Incluye alergias o medicamentos<br />
+              • Describe características únicas<br />
+              • Facilita el cuidado veterinario
+            </Typography>
+          </Card>
+        </Grid>
+      </Grid>
     </Container>
   );
 }

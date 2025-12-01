@@ -301,7 +301,7 @@ export default function AppointmentSchedulerPage() {
 
           {/* Step 0: Owner (if receptionist) and Pet Selection */}
           {activeStep === 0 && (
-            <Box>
+            <Box sx={{ space: 3 }}>
               {/* Owner Selection (Receptionist/Admin only) */}
               {isReceptionistOrAdmin && (
                 <Controller
@@ -318,6 +318,7 @@ export default function AppointmentSchedulerPage() {
                       <Select
                         {...field}
                         label="Propietario *"
+                        startAdornment={<PersonIcon sx={{ marginRight: 1, color: '#1E40AF' }} />}
                       >
                         <MenuItem value="">
                           <em>Seleccione un cliente</em>
@@ -545,14 +546,14 @@ export default function AppointmentSchedulerPage() {
                 marginBottom: 3,
                 backgroundColor: '#F8FAFC',
                 border: '1px solid #E5E7EB',
-                borderRadius: 2,
+                borderRadius: 1,
               }}
             >
               <Typography variant="h6" sx={{ fontWeight: 600, marginBottom: 2, color: '#1F2937' }}>
                 📋 Resumen de tu Cita
               </Typography>
 
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ space: 2 }}>
                 {selectedClientData && (
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', marginBottom: 1.5 }}>
                     <Typography variant="body2" color="textSecondary">

@@ -1,25 +1,5 @@
-// frontend/src/features/dashboard/ProfessionalDashboard.jsx
+import { Container, Grid, Card, Typography, List, ListItem, ListItemText, ListItemAvatar, Avatar, Box, Button, Paper, Chip, Alert, Tab, Tabs } from '@mui/material';
 import { useState } from 'react';
-import { 
-  Container, 
-  Grid, 
-  Card, 
-  Typography, 
-  List, 
-  ListItem, 
-  ListItemText, 
-  ListItemAvatar, 
-  Avatar, 
-  Box, 
-  Button, 
-  Paper, 
-  Chip, 
-  Alert, 
-  Tab, 
-  Tabs,
-  Divider,
-  IconButton
-} from '@mui/material';
 import {
   Event as EventIcon,
   MedicalServices as MedicalServicesIcon,
@@ -29,18 +9,46 @@ import {
   Schedule as ScheduleIcon,
   ArrowRight as ArrowRightIcon,
   Mic as MicIcon,
-  Phone as PhoneIcon,
-  Email as EmailIcon,
-  Pets as PetsIcon,
-  AccessTime as AccessTimeIcon,
-  TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
 import { Link } from 'react-router-dom';
-import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import WelcomeHeader from '../../components/dashboard/WelcomeHeader';
-import StatCard from '../../components/ui/StatCard';
+import WelcomeHeader from './components/WelcomeHeader';
 
-const COLORS = ['#10B981', '#3F51B5', '#F59E0B', '#EF4444'];
+const StatCard = ({ title, value, icon: Icon, color, bgColor }) => (
+  <Paper
+    sx={{
+      padding: 2,
+      borderRadius: 2,
+      backgroundColor: bgColor,
+      border: `1px solid ${color}20`,
+      display: 'flex',
+      alignItems: 'center',
+      gap: 2,
+      height: '100%',
+    }}
+  >
+    <Box
+      sx={{
+        width: 48,
+        height: 48,
+        borderRadius: '50%',
+        backgroundColor: 'rgba(255, 255, 255, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Icon sx={{ color, fontSize: 24 }} />
+    </Box>
+    <Box>
+      <Typography variant="caption" sx={{ color: '#6B7280', fontWeight: 600 }}>
+        {title}
+      </Typography>
+      <Typography variant="h6" sx={{ fontWeight: 700, color }}>
+        {value}
+      </Typography>
+    </Box>
+  </Paper>
+);
 
 export default function ProfessionalDashboard({ data, user }) {
   const [tabValue, setTabValue] = useState(0);
@@ -56,72 +64,61 @@ export default function ProfessionalDashboard({ data, user }) {
     });
   };
 
-  const formatTime = (dateString) => {
-    if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleTimeString('es-ES', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const stats = data?.stats || {};
-  const appointmentsToday = data?.appointmentsToday || [];
+  const todayAppointments = data?.todayAppointments || [];
   const upcomingAppointments = data?.upcomingAppointments || [];
-  const recentMedicalRecords = data?.recentMedicalRecords || [];
-  const appointmentStats = data?.appointmentStats || [];
+  const servicesProvided = data?.servicesProvided || 0;
+  const patientsServed = data?.patientsServed || 0;
+
+  const stats = [
+    {
+      title: 'Pacientes Atendidos',
+      value: patientsServed,
+      icon: PersonIcon,
+      color: '#1E40AF',
+      bgColor: '#EFF6FF',
+    },
+    {
+      title: 'Servicios Realizados',
+      value: servicesProvided,
+      icon: MedicalServicesIcon,
+      color: '#059669',
+      bgColor: '#F0FDF4',
+    },
+    {
+      title: 'Citas Hoy',
+      value: todayAppointments.length,
+      icon: ScheduleIcon,
+      color: '#D97706',
+      bgColor: '#FEF3C7',
+    },
+  ];
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <WelcomeHeader user={user} />
 
-      {/* Alert Informativo */}
-      <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3, borderRadius: 2 }}>
+      {/* Info Alert */}
+      <Alert
+        severity="info"
+        icon={<InfoIcon />}
+        sx={{ mb: 3, borderRadius: 2 }}
+      >
         <Typography variant="body2">
-          <strong>💼 Panel Profesional:</strong> Gestiona tus citas, consulta pacientes y optimiza tu agenda diaria.
+          <strong>💡 Panel Profesional:</strong> Gestiona tus citas, revisa registros médicos y consulta tu agenda del día.
         </Typography>
       </Alert>
 
-      {/* KPIs Principales */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard 
-            title="Pacientes Totales" 
-            value={stats.totalPatients || 0}
-            icon={PersonIcon} 
-            color="#1E40AF"
-            subtitle="Pacientes únicos atendidos"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard 
-            title="Completadas Hoy" 
-            value={stats.completedToday || 0}
-            icon={CheckCircleIcon} 
-            color="#10B981"
-            subtitle={`${stats.todayAppointmentsCount || 0} programadas`}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard 
-            title="Esta Semana" 
-            value={stats.completedThisWeek || 0}
-            icon={TrendingUpIcon} 
-            color="#059669"
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard 
-            title="Próximas Citas" 
-            value={stats.upcomingCount || 0}
-            icon={ScheduleIcon} 
-            color="#F59E0B"
-            subtitle="Siguiente semana"
-          />
-        </Grid>
+      {/* Stats Grid */}
+      <Grid container spacing={2} sx={{ mb: 3 }}>
+        {stats.map((stat, index) => (
+          <Grid item xs={12} sm={6} md={4} key={index}>
+            <StatCard {...stat} />
+          </Grid>
+        ))}
       </Grid>
 
-      {/* Tabs de Contenido */}
-      <Card sx={{ borderRadius: 2, border: '1px solid #E5E7EB', overflow: 'hidden', mb: 4 }}>
+      {/* Tabs */}
+      <Card sx={{ borderRadius: 2, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
         <Tabs
           value={tabValue}
           onChange={(e, newValue) => setTabValue(newValue)}
@@ -146,141 +143,16 @@ export default function ProfessionalDashboard({ data, user }) {
           <Tab label="Citas de Hoy" icon={<EventIcon />} iconPosition="start" />
           <Tab label="Próximas Citas" icon={<ScheduleIcon />} iconPosition="start" />
           <Tab label="Registros Médicos" icon={<MedicalServicesIcon />} iconPosition="start" />
-          <Tab label="Estadísticas" icon={<TrendingUpIcon />} iconPosition="start" />
         </Tabs>
 
         <Box sx={{ p: 3 }}>
           {/* Tab 1: Citas de Hoy */}
           {tabValue === 0 && (
             <Box>
-              {appointmentsToday.length > 0 ? (
-                <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                  {appointmentsToday.map((app) => (
-                    <Paper
-                      key={app.id}
-                      sx={{
-                        p: 2.5,
-                        borderRadius: 2,
-                        border: '1px solid #E5E7EB',
-                        backgroundColor: '#F9FAFB',
-                        '&:hover': {
-                          backgroundColor: '#F3F4F6',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', gap: 2 }}>
-                        <Avatar
-                          src={app.pet.photoUrl}
-                          sx={{ width: 56, height: 56, backgroundColor: '#EFF6FF' }}
-                        >
-                          <PetsIcon sx={{ color: '#1E40AF' }} />
-                        </Avatar>
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="body1" sx={{ fontWeight: 700, color: '#1F2937', mb: 0.5 }}>
-                            {app.pet.name} - {app.service.name}
-                          </Typography>
-                          <Typography variant="caption" color="textSecondary" display="block">
-                            {app.pet.species}
-                          </Typography>
-                          
-                          <Divider sx={{ my: 1.5 }} />
-                          
-                          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <PersonIcon sx={{ fontSize: 18, color: '#6B7280' }} />
-                                <Box>
-                                  <Typography variant="caption" color="textSecondary" display="block">
-                                    Cliente
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {app.client.name}
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <AccessTimeIcon sx={{ fontSize: 18, color: '#6B7280' }} />
-                                <Box>
-                                  <Typography variant="caption" color="textSecondary" display="block">
-                                    Hora
-                                  </Typography>
-                                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                                    {formatTime(app.dateTime)} ({app.service.duration} min)
-                                  </Typography>
-                                </Box>
-                              </Box>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <PhoneIcon sx={{ fontSize: 18, color: '#6B7280' }} />
-                                <Typography variant="body2">
-                                  {app.client.phone}
-                                </Typography>
-                              </Box>
-                            </Grid>
-                            <Grid item xs={12} sm={6}>
-                              <Chip
-                                label={app.status}
-                                color={app.status === 'Completada' ? 'success' : 'primary'}
-                                size="small"
-                              />
-                            </Grid>
-                          </Grid>
-                        </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                          <Button
-                            component={Link}
-                            to={`/medical-record/form/${app.id}`}
-                            variant="contained"
-                            size="small"
-                            startIcon={<MedicalServicesIcon />}
-                            sx={{
-                              textTransform: 'none',
-                              fontWeight: 600,
-                              backgroundColor: '#1E40AF',
-                              '&:hover': {
-                                backgroundColor: '#1E3A8A',
-                              },
-                            }}
-                          >
-                            Registro
-                          </Button>
-                        </Box>
-                      </Box>
-                    </Paper>
-                  ))}
-                </List>
-              ) : (
-                <Paper
-                  sx={{
-                    p: 4,
-                    textAlign: 'center',
-                    backgroundColor: '#F9FAFB',
-                    border: '1px dashed #D1D5DB',
-                  }}
-                >
-                  <EventIcon sx={{ fontSize: 64, color: '#D1D5DB', mb: 2 }} />
-                  <Typography variant="h6" color="textSecondary" sx={{ fontWeight: 600, mb: 1 }}>
-                    No tienes citas programadas para hoy
-                  </Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Disfruta tu día o revisa las próximas citas
-                  </Typography>
-                </Paper>
-              )}
-            </Box>
-          )}
-
-          {/* Tab 2: Próximas Citas */}
-          {tabValue === 1 && (
-            <Box>
-              {upcomingAppointments.length > 0 ? (
+              {todayAppointments.length > 0 ? (
                 <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                  {upcomingAppointments.map((app) => (
-                    <ListItem
+                  {todayAppointments.map((app) => (
+                    <Paper
                       key={app.id}
                       sx={{
                         p: 2,
@@ -292,19 +164,18 @@ export default function ProfessionalDashboard({ data, user }) {
                         },
                       }}
                     >
-                      <ListItemAvatar>
-                        <Avatar src={app.pet.photoUrl} sx={{ backgroundColor: '#F0FDF4' }}>
-                          <ScheduleIcon sx={{ color: '#059669' }} />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ backgroundColor: '#EFF6FF' }}>
+                          <EventIcon sx={{ color: '#1E40AF' }} />
                         </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={
+                        <Box sx={{ flex: 1 }}>
                           <Typography variant="body2" sx={{ fontWeight: 700, color: '#1F2937' }}>
-                            {app.pet.name} - {app.service.name}
+                            {app.pet?.name} - {app.service?.name}
                           </Typography>
-                        }
-                        secondary={
-                          <Box component="span" sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                          <Typography variant="caption" color="textSecondary">
+                            Cliente: {app.client?.firstName} {app.client?.lastName}
+                          </Typography>
+                          <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                             <Chip
                               label={formatDate(app.dateTime)}
                               size="small"
@@ -312,16 +183,85 @@ export default function ProfessionalDashboard({ data, user }) {
                               sx={{ height: 24 }}
                             />
                             <Chip
-                              label={`${app.service.duration} min`}
-                              size="small"
+                              label={app.status || 'Programada'}
+                              color={app.status === 'Completada' ? 'success' : 'warning'}
                               variant="outlined"
+                              size="small"
                               sx={{ height: 24 }}
                             />
                           </Box>
-                        }
-                        secondaryTypographyProps={{ component: 'span' }}
-                      />
-                    </ListItem>
+                        </Box>
+                        <Button
+                          component={Link}
+                          to={`/appointments/${app.id}`}
+                          variant="contained"
+                          size="small"
+                          sx={{
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            backgroundColor: '#1E40AF',
+                            '&:hover': {
+                              backgroundColor: '#1E3A8A',
+                            },
+                          }}
+                        >
+                          Ver
+                        </Button>
+                      </Box>
+                    </Paper>
+                  ))}
+                </List>
+              ) : (
+                <Paper
+                  sx={{
+                    p: 3,
+                    textAlign: 'center',
+                    backgroundColor: '#F9FAFB',
+                    border: '1px dashed #D1D5DB',
+                  }}
+                >
+                  <EventIcon sx={{ fontSize: 48, color: '#D1D5DB', mb: 1 }} />
+                  <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
+                    No tienes citas programadas para hoy
+                  </Typography>
+                </Paper>
+              )}
+            </Box>
+          )}
+
+          {/* Tab 2: Próximas Citas */}
+          {tabValue === 1 && (
+            <Box>
+              {upcomingAppointments.length > 0 ? (
+                <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                  {upcomingAppointments.slice(0, 10).map((app) => (
+                    <Paper
+                      key={app.id}
+                      sx={{
+                        p: 2,
+                        borderRadius: 1,
+                        border: '1px solid #E5E7EB',
+                        backgroundColor: '#F9FAFB',
+                        '&:hover': {
+                          backgroundColor: '#F3F4F6',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ backgroundColor: '#F0FDF4' }}>
+                          <ScheduleIcon sx={{ color: '#059669' }} />
+                        </Avatar>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: '#1F2937' }}>
+                            {app.pet?.name} - {app.service?.name}
+                          </Typography>
+                          <Typography variant="caption" color="textSecondary">
+                            {formatDate(app.dateTime)}
+                          </Typography>
+                        </Box>
+                        <CheckCircleIcon sx={{ color: '#10B981', fontSize: 20 }} />
+                      </Box>
+                    </Paper>
                   ))}
                 </List>
               ) : (
@@ -345,107 +285,189 @@ export default function ProfessionalDashboard({ data, user }) {
           {/* Tab 3: Registros Médicos */}
           {tabValue === 2 && (
             <Box>
-              <Alert severity="info" sx={{ mb: 2, borderRadius: 1 }}>
-                <Typography variant="body2">
-                  <strong>🎙️ Documentación Automatizada:</strong> Utiliza la grabación de audio para generar registros médicos automáticamente.
+              <Paper
+                sx={{
+                  p: 3,
+                  mb: 2,
+                  backgroundColor: '#E8EAF6',
+                  border: '1px solid #3F51B5',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <MicIcon sx={{ color: '#3F51B5', fontSize: 28 }} />
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: '#3F51B5' }}>
+                    Documentación Clínica Automatizada
+                  </Typography>
+                </Box>
+                <Typography variant="body2" sx={{ mb: 2, color: '#212121' }}>
+                  Graba la conversación durante las consultas para generar automáticamente
+                  diagnóstico, tratamiento y notas usando inteligencia artificial. Ahorra tiempo
+                  administrativo y mantén registros detallados.
                 </Typography>
-              </Alert>
-              
-              {recentMedicalRecords.length > 0 ? (
-                <List disablePadding>
-                  {recentMedicalRecords.map((record, index) => (
-                    <Box key={record.id}>
-                      <ListItem sx={{ px: 0 }}>
-                        <ListItemAvatar>
-                          <Avatar src={record.pet.photoUrl} sx={{ backgroundColor: '#F0FDF4' }}>
-                            <MedicalServicesIcon sx={{ color: '#059669' }} />
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {record.pet.name} - {record.service}
-                            </Typography>
-                          }
-                          secondary={
-                            <Box component="span">
-                              <Typography component="span" variant="caption" color="textSecondary" display="block">
-                                {new Date(record.date).toLocaleDateString('es-ES')}
-                              </Typography>
-                              <Typography component="span" variant="body2" display="block" sx={{ mt: 0.5 }}>
-                                {record.diagnosis}
-                              </Typography>
-                              {record.hasTranscription && (
-                                <Chip
-                                  label="Con transcripción IA"
-                                  size="small"
-                                  icon={<MicIcon />}
-                                  color="black"
-                                  sx={{ mt: 1 }}
-                                />
-                              )}
-                            </Box>
-                          }
-                          secondaryTypographyProps={{ component: 'span' }}
-                        />
-                      </ListItem>
-                      {index < recentMedicalRecords.length - 1 && <Divider />}
-                    </Box>
-                  ))}
-                </List>
-              ) : (
-                <Paper
+                <Alert severity="info" sx={{ mb: 2, borderRadius: 1 }}>
+                  <Typography variant="caption">
+                    Esta funcionalidad está disponible al crear o editar un historial médico.
+                    Requiere consentimiento del cliente antes de iniciar la grabación.
+                  </Typography>
+                </Alert>
+              </Paper>
+              <Paper
+                sx={{
+                  p: 3,
+                  textAlign: 'center',
+                  backgroundColor: '#F9FAFB',
+                  border: '1px dashed #D1D5DB',
+                }}
+              >
+                <MedicalServicesIcon sx={{ fontSize: 48, color: '#D1D5DB', mb: 1 }} />
+                <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600, mb: 1 }}>
+                  Accede a los registros médicos de tus pacientes
+                </Typography>
+                <Button
+                  component={Link}
+                  to="/medical-records"
+                  variant="contained"
+                  size="small"
+                  endIcon={<ArrowRightIcon />}
                   sx={{
-                    p: 3,
-                    textAlign: 'center',
-                    backgroundColor: '#F9FAFB',
-                    border: '1px dashed #D1D5DB',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    backgroundColor: '#1E40AF',
+                    '&:hover': {
+                      backgroundColor: '#1E3A8A',
+                    },
                   }}
                 >
-                  <MedicalServicesIcon sx={{ fontSize: 48, color: '#D1D5DB', mb: 1 }} />
-                  <Typography variant="body2" color="textSecondary" sx={{ fontWeight: 600 }}>
-                    No hay registros médicos recientes
-                  </Typography>
-                </Paper>
-              )}
-            </Box>
-          )}
-
-          {/* Tab 4: Estadísticas */}
-          {tabValue === 3 && (
-            <Box>
-              <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>
-                Distribución de Citas (Últimos 30 días)
-              </Typography>
-              {appointmentStats.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={appointmentStats}
-                      dataKey="count"
-                      nameKey="status"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      label
-                    >
-                      {appointmentStats.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <Typography variant="body2" color="textSecondary" align="center">
-                  No hay suficientes datos para mostrar estadísticas
-                </Typography>
-              )}
+                  Ver Registros
+                </Button>
+              </Paper>
             </Box>
           )}
         </Box>
       </Card>
+
+      {/* Quick Actions */}
+      <Paper
+        sx={{
+          mt: 3,
+          p: 3,
+          borderRadius: 2,
+          backgroundColor: '#F0FDF4',
+          border: '1px solid #BBEF63',
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: '#059669' }}>
+          ⚡ Acciones Rápidas
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              component={Link}
+              to="/appointments"
+              fullWidth
+              variant="outlined"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#059669',
+                color: '#059669',
+                '&:hover': {
+                  backgroundColor: '#F0FDF4',
+                  borderColor: '#059669',
+                },
+              }}
+            >
+              Ver Agenda
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              component={Link}
+              to="/medical-records"
+              fullWidth
+              variant="outlined"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#059669',
+                color: '#059669',
+                '&:hover': {
+                  backgroundColor: '#F0FDF4',
+                  borderColor: '#059669',
+                },
+              }}
+            >
+              Historiales
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              component={Link}
+              to="/patients"
+              fullWidth
+              variant="outlined"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#059669',
+                color: '#059669',
+                '&:hover': {
+                  backgroundColor: '#F0FDF4',
+                  borderColor: '#059669',
+                },
+              }}
+            >
+              Mis Pacientes
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Button
+              component={Link}
+              to="/profile"
+              fullWidth
+              variant="outlined"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: '#059669',
+                color: '#059669',
+                '&:hover': {
+                  backgroundColor: '#F0FDF4',
+                  borderColor: '#059669',
+                },
+              }}
+            >
+              Mi Perfil
+            </Button>
+          </Grid>
+        </Grid>
+        <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid #BBEF63' }}>
+          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, color: '#059669' }}>
+            🤖 Nueva Funcionalidad: Documentación Automatizada
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 2, color: '#1F2937' }}>
+            Usa la documentación clínica automatizada para generar registros médicos
+            automáticamente desde grabaciones de audio durante las consultas. Disponible
+            al crear o editar un historial médico.
+          </Typography>
+          <Button
+            component={Link}
+            to="/appointments/calendar"
+            variant="contained"
+            startIcon={<MicIcon />}
+            sx={{
+              textTransform: 'none',
+              fontWeight: 600,
+              backgroundColor: '#3F51B5',
+              '&:hover': {
+                backgroundColor: '#303F9F',
+              },
+            }}
+          >
+            Probar Documentación Automatizada
+          </Button>
+        </Box>
+      </Paper>
     </Container>
   );
 }

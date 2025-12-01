@@ -1,3 +1,4 @@
+//Inicializa Sequelize y asocia los modelos
 // backend/src/api/models/index.js
 import { Sequelize } from 'sequelize';
 import sequelize from '../../config/database.js';
@@ -31,63 +32,57 @@ db.Sale = SaleModel(sequelize);
 db.SaleDetail = SaleDetailModel(sequelize);
 db.MedicalRecordProduct = MedicalRecordProductModel(sequelize);
 
-// ==========================================
-// DEFINICIÓN DE ASOCIACIONES
-// ==========================================
+// Definición de Asociaciones
 
-// --- Usuario y Mascotas ---
 // Usuario (Cliente) tiene muchas Mascotas
 db.User.hasMany(db.Pet, { foreignKey: 'ownerId', as: 'pets' });
 db.Pet.belongsTo(db.User, { foreignKey: 'ownerId', as: 'owner' });
 
-// --- Especie y Mascotas ---
+// Especie tiene muchas Mascotas
 db.Species.hasMany(db.Pet, { foreignKey: 'speciesId', as: 'pets' });
 db.Pet.belongsTo(db.Species, { foreignKey: 'speciesId', as: 'species' });
 
-// --- Mascota y Citas ---
+// Mascota tiene muchas Citas
 db.Pet.hasMany(db.Appointment, { foreignKey: 'petId', as: 'appointments' });
 db.Appointment.belongsTo(db.Pet, { foreignKey: 'petId', as: 'pet' });
 
-// --- Servicio y Citas ---
+// Servicio tiene muchas Citas
 db.Service.hasMany(db.Appointment, { foreignKey: 'serviceId', as: 'appointments' });
 db.Appointment.belongsTo(db.Service, { foreignKey: 'serviceId', as: 'service' });
 
-// --- Usuario (Profesional) y Citas ---
+// Usuario (Profesional) tiene muchas Citas
 db.User.hasMany(db.Appointment, { foreignKey: 'professionalId', as: 'professionalAppointments' });
 db.Appointment.belongsTo(db.User, { foreignKey: 'professionalId', as: 'professional' });
 
-// --- Cita e Historial Médico ---
+// Cita tiene un Historial Médico
 db.Appointment.hasOne(db.MedicalRecord, { foreignKey: 'appointmentId', as: 'medicalRecord' });
 db.MedicalRecord.belongsTo(db.Appointment, { foreignKey: 'appointmentId', as: 'appointment' });
 
-// --- Historial Médico y Productos (Relación N:M) ---
+// Nueva relación: Historial Médico y Productos (Medicamentos usados)
 db.MedicalRecord.belongsToMany(db.Product, { through: db.MedicalRecordProduct, foreignKey: 'medicalRecordId', as: 'products' });
 db.Product.belongsToMany(db.MedicalRecord, { through: db.MedicalRecordProduct, foreignKey: 'productId', as: 'medicalRecords' });
 
-// --- Producto y Stock ---
+// Producto tiene muchas Transacciones de Stock
 db.Product.hasMany(db.StockTransaction, { foreignKey: 'productId', as: 'stockTransactions' });
 db.StockTransaction.belongsTo(db.Product, { foreignKey: 'productId', as: 'product' });
 
-// --- Usuario y Stock ---
+// Usuario (quien realiza la transacción) tiene muchas Transacciones
 db.User.hasMany(db.StockTransaction, { foreignKey: 'userId', as: 'stockTransactions' });
 db.StockTransaction.belongsTo(db.User, { foreignKey: 'userId', as: 'user' });
 
-// --- Ventas ---
-// Cliente de la venta
+// Venta pertenece a un Cliente (User) y a un Vendedor (User)
 db.User.hasMany(db.Sale, { foreignKey: 'clientId', as: 'clientSales' });
 db.Sale.belongsTo(db.User, { foreignKey: 'clientId', as: 'client' });
-// Vendedor de la venta
 db.User.hasMany(db.Sale, { foreignKey: 'sellerId', as: 'sellerSales' });
 db.Sale.belongsTo(db.User, { foreignKey: 'sellerId', as: 'seller' });
 
-// --- Venta y Detalles ---
+// Venta tiene muchos Detalles de Venta
 db.Sale.hasMany(db.SaleDetail, { foreignKey: 'saleId', as: 'details' });
 db.SaleDetail.belongsTo(db.Sale, { foreignKey: 'saleId', as: 'sale' });
 
-// --- Detalles de Venta (Polimorfismo simplificado o referencias directas) ---
+// Detalle de Venta puede ser un Producto o un Servicio
 db.Product.hasMany(db.SaleDetail, { foreignKey: 'productId' });
 db.SaleDetail.belongsTo(db.Product, { foreignKey: 'productId' });
-
 db.Service.hasMany(db.SaleDetail, { foreignKey: 'serviceId' });
 db.SaleDetail.belongsTo(db.Service, { foreignKey: 'serviceId' });
 

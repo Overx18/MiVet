@@ -45,20 +45,13 @@ export default function AudioRecordingDialog({ open, onClose, appointmentId, onD
 
   const mutation = useMutation({
     mutationFn: processAudioTranscription,
-    onSuccess: (response) => {
+    onSuccess: (data) => {
       toast.success('Documentación generada exitosamente');
-      
-      // [SOLUCIÓN] Asegurarse de que los datos se pasan correctamente
-      if (onDataReceived && response.data) {
-        onDataReceived(response.data);
+      if (onDataReceived) {
+        onDataReceived(data.data);
       }
-      
       setIsProcessing(false);
-      
-      // [SOLUCIÓN] Cerrar el diálogo después de un pequeño delay para que el usuario vea el toast
-      setTimeout(() => {
-        handleClose();
-      }, 500);
+      handleClose();
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Error al procesar el audio');

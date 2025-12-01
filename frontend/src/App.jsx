@@ -36,12 +36,8 @@ import PointOfSalePage from './features/sales/PointOfSalePage.jsx';
 import UserManagementPage from './features/admin/UserManagementPage.jsx';
 import SpeciesManagementPage from './features/admin/SpeciesManagementPage.jsx';
 import ServiceManagementPage from './features/admin/ServiceManagementPage.jsx';
-import ReportsPage from './features/reports/ReportsPage.jsx';
-
-import RemindersPage from './features/chatbot/RemindersPage.jsx';
 
 import UnauthorizedPage from './pages/UnauthorizedPage.jsx';
-import NotFoundPage from './pages/NotFoundPage.jsx';
 
 const queryClient = new QueryClient();
 
@@ -70,8 +66,6 @@ function App() {
               <Route path="/payment-success" element={<PaymentSuccess />} />
               <Route path="/pets" element={<PetListPage />} />
               <Route path="/pets/:petId/history" element={<PetHistoryPage />} />
-              <Route path="/reminders" element={<RemindersPage />} />
-
             </Route>
 
             {/* Cliente, Recepcionista, Veterinario, Groomer */}
@@ -115,11 +109,7 @@ function App() {
               <Route path="/admin/species" element={<SpeciesManagementPage />} />
               <Route path="/admin/services" element={<ServiceManagementPage />} />
               <Route path="/inventory/products/new" element={<ProductRegistrationPage />} />
-              <Route path="/reports" element={<ReportsPage />} />
             </Route>
-
-            {/* RUTA 404*/}
-            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

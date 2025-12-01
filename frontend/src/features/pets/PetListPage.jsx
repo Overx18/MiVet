@@ -342,11 +342,6 @@ export default function PetListPage() {
                     <TableCell sx={{ fontWeight: 700, color: '#1F2937', textAlign: 'center' }}>
                       Estado
                     </TableCell>
-                    {canEditOrDelete && (
-                      <TableCell sx={{ fontWeight: 700, color: '#1F2937', textAlign: 'center', minWidth: 280 }}>
-                        Acciones
-                      </TableCell>
-                    )}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -427,8 +422,8 @@ export default function PetListPage() {
 
                       {/* Acciones */}
                       {canEditOrDelete && (
-                        <TableCell>
-                          <Box sx={{ display: 'flex', gap: 0.75, justifyContent: 'flex-end', alignItems: 'center' }}>
+                        <TableCell sx={{ textAlign: 'center' }}>
+                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', flexWrap: 'wrap' }}>
                             <Button
                               component={RouterLink}
                               to={`/pets/${pet.id}/edit`}
@@ -436,7 +431,6 @@ export default function PetListPage() {
                               variant="outlined"
                               color="primary"
                               startIcon={<EditIcon fontSize="small" />}
-                              sx={{ minWidth: 'auto', px: 1.5, textTransform: 'none' }}
                             >
                               Editar
                             </Button>
@@ -446,9 +440,8 @@ export default function PetListPage() {
                               to={`/pets/${pet.id}/history`}
                               size="small"
                               variant="outlined"
-                              color="info"
+                              color="secondary"
                               startIcon={<HistoryIcon fontSize="small" />}
-                              sx={{ minWidth: 'auto', px: 1.5, textTransform: 'none' }}
                             >
                               Historial
                             </Button>
@@ -460,7 +453,6 @@ export default function PetListPage() {
                                 color="error"
                                 onClick={() => handleDeleteClick(pet)}
                                 startIcon={<DeleteIcon fontSize="small" />}
-                                sx={{ minWidth: 'auto', px: 1.5, textTransform: 'none' }}
                               >
                                 Desactivar
                               </Button>
@@ -508,7 +500,23 @@ export default function PetListPage() {
         </Box>
       )}
 
-
+      {/* Info Alert */}
+      <Alert severity="info" sx={{ marginTop: 4, borderRadius: 1 }}>
+        <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
+          <InfoIcon sx={{ marginTop: 0.5, flexShrink: 0 }} />
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 600, marginBottom: 0.5 }}>
+              💡 Tips útiles:
+            </Typography>
+            <Typography variant="caption" color="textSecondary" sx={{ display: 'block', lineHeight: 1.6 }}>
+              • Usa la búsqueda para filtrar mascotas por propietario<br />
+              • Haz clic en "Editar" para actualizar información de la mascota<br />
+              • Solo se pueden desactivar mascotas activas<br />
+              • Las mascotas desactivadas aparecen atenuadas en la lista
+            </Typography>
+          </Box>
+        </Box>
+      </Alert>
 
       {/* Delete Confirmation Dialog */}
       <Dialog

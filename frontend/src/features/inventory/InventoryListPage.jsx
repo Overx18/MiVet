@@ -207,28 +207,20 @@ export default function InventoryListPage() {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <InventoryIcon sx={{ fontSize: 32, color: 'primary.main' }} />
-            <Box>
-              <Typography variant="h4" sx={{ fontWeight: 700, color: '#1F2937' }}>
-                Inventario de Productos
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Gestiona el stock y productos disponibles
-              </Typography>
-            </Box>
-          </Box>
-          <Button
-            component={Link}
-            to="/inventory/products/new"
-            variant="contained"
-            startIcon={<AddIcon />}
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          >
-            Nuevo Producto
-          </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <InventoryIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+          <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            Inventario de Productos
+          </Typography>
         </Box>
+        <Button
+          component={Link}
+          to="/inventory/products/new"
+          variant="contained"
+          startIcon={<AddIcon />}
+        >
+          Nuevo Producto
+        </Button>
       </Box>
 
       {/* Filtros */}
@@ -277,17 +269,17 @@ export default function InventoryListPage() {
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
-            <TableRow sx={{ backgroundColor: '#F8FAFC' }}>
-              <TableCell sx={{ fontWeight: 700, color: '#1F2937' }}>Nombre</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#1F2937' }}>Descripción</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#1F2937' }} align="right">
+            <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+              <TableCell sx={{ fontWeight: 700 }}>Nombre</TableCell>
+              <TableCell sx={{ fontWeight: 700 }}>Descripción</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="right">
                 Precio
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#1F2937' }} align="center">
+              <TableCell sx={{ fontWeight: 700 }} align="center">
                 Stock
               </TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#1F2937' }}>Estado</TableCell>
-              <TableCell sx={{ fontWeight: 700, color: '#1F2937' }} align="center">
+              <TableCell sx={{ fontWeight: 700 }}>Estado</TableCell>
+              <TableCell sx={{ fontWeight: 700 }} align="center">
                 Acciones
               </TableCell>
             </TableRow>
@@ -309,7 +301,7 @@ export default function InventoryListPage() {
                   <TableCell>
                     {product.quantity < 10 && (
                       <Tooltip title="Stock bajo">
-                        <Chip icon={<WarningIcon />} label="Bajo" color="black" size="small" />
+                        <Chip icon={<WarningIcon />} label="Bajo" color="warning" size="small" />
                       </Tooltip>
                     )}
                   </TableCell>
@@ -357,19 +349,12 @@ export default function InventoryListPage() {
 
       {/* Paginación */}
       {totalPages > 1 && (
-        <Box sx={{ mt: 3 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="body2" color="textSecondary">
-              Mostrando {products.length} de {data?.total || 0} productos
-            </Typography>
-            <Pagination
-              count={totalPages}
-              page={filters.page}
-              onChange={(e, page) => setFilters({ ...filters, page })}
-              color="primary"
-              shape="rounded"
-            />
-          </Box>
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+          <Pagination
+            count={totalPages}
+            page={filters.page}
+            onChange={(e, page) => setFilters({ ...filters, page })}
+          />
         </Box>
       )}
 

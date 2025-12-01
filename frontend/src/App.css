@@ -1,8 +1,8 @@
 #root {
-  /* max-width: 1280px;  <-- Comenta esto */
-  /* margin: 0 auto;     <-- Comenta esto si no quieres centrado forzado */
-  /* padding: 2rem;      <-- Comenta esto si quieres llegar a los bordes */
-  width: 100%;           /* Asegúrate de que ocupe todo el ancho */
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
 }
 
 .logo {

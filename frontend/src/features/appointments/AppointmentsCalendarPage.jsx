@@ -1,6 +1,6 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer, Views } from 'react-big-calendar';
-import { format, parse, startOfWeek, getDay, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parse, startOfWeek, getDay } from 'date-fns';
 import es from 'date-fns/locale/es';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -47,15 +47,6 @@ import './AppointmentsCalendar.css';
 const locales = { es };
 const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
 
-// --- Función para obtener rango inicial del mes actual ---
-const getInitialDateRange = () => {
-  const now = new Date();
-  return {
-    start: startOfMonth(now).toISOString(),
-    end: endOfMonth(now).toISOString(),
-  };
-};
-
 // --- Funciones API ---
 const fetchAppointments = (range, token) => {
   const params = new URLSearchParams(range).toString();
@@ -87,7 +78,7 @@ export default function AppointmentsCalendarPage() {
   const queryClient = useQueryClient();
 
   // --- Estados principales ---
-  const [dateRange, setDateRange] = useState(getInitialDateRange());
+  const [dateRange, setDateRange] = useState({});
   const [currentView, setCurrentView] = useState(Views.MONTH);
   const [date, setDate] = useState(new Date());
   const [selectedAppointment, setSelectedAppointment] = useState(null);
@@ -100,31 +91,12 @@ export default function AppointmentsCalendarPage() {
   const [availableSlots, setAvailableSlots] = useState([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // --- Queries (MOVER ANTES DE LOS useEffect) ---
+  // --- Queries ---
   const { data: appointments = [], isLoading, isError } = useQuery({
     queryKey: ['appointments', dateRange],
     queryFn: () => fetchAppointments(dateRange, token),
     enabled: !!dateRange.start && !!token,
-    staleTime: 30000,
-    refetchOnMount: true,
   });
-
-  // --- Effect para cargar citas al montar el componente ---
-  useEffect(() => {
-    if (!dateRange.start || !dateRange.end) {
-      setDateRange(getInitialDateRange());
-    }
-  }, []); // Dependencias vacías - solo se ejecuta al montar
-
-  // --- Effect para notificar cuando se cargan las citas ---
-  useEffect(() => {
-    if (!isLoading && appointments.length > 0 && dateRange.start) {
-      const isInitialLoad = dateRange.start === getInitialDateRange().start;
-      if (isInitialLoad) {
-        toast.success(`${appointments.length} cita${appointments.length !== 1 ? 's' : ''} cargada${appointments.length !== 1 ? 's' : ''}`);
-      }
-    }
-  }, [isLoading, appointments.length, dateRange.start]); // Agregar dateRange.start a las dependencias
 
   // --- Mutaciones ---
   const rescheduleMutation = useMutation({
@@ -312,14 +284,14 @@ export default function AppointmentsCalendarPage() {
   const RescheduleModal = () => (
     <Dialog
       open={showRescheduleModal}
-      onClose={() => setShowRescheduleModal(false)}
+      onClose={() => setShowResFcheduleModal(false)}
       maxWidth="sm"
       fullWidth
     >
       <DialogTitle
         sx={{
           fontWeight: 600,
-          color: 'white',
+          color: '#1F2937',
           display: 'flex',
           alignItems: 'center',
           gap: 1,
@@ -418,23 +390,18 @@ export default function AppointmentsCalendarPage() {
   );
 
   // --- Render ---
-  if (isLoading && appointments.length === 0) {
+  if (isLoading) {
     return (
       <Container maxWidth="lg" sx={{ paddingY: 4 }}>
         <Box
           sx={{
             display: 'flex',
-            flexDirection: 'column',
             justifyContent: 'center',
             alignItems: 'center',
             minHeight: '400px',
-            gap: 2,
           }}
         >
-          <CircularProgress size={48} />
-          <Typography variant="body1" color="textSecondary">
-            Cargando citas del calendario...
-          </Typography>
+          <CircularProgress />
         </Box>
       </Container>
     );
@@ -466,37 +433,13 @@ export default function AppointmentsCalendarPage() {
           >
             Calendario de Citas
           </Typography>
-          {appointments.length > 0 && (
-            <Chip 
-              label={`${appointments.length} cita${appointments.length !== 1 ? 's' : ''}`}
-              color="black"
-              size="small"
-              sx={{ fontWeight: 600 }}
-            />
-          )}
         </Box>
         <Typography variant="body1" color="textSecondary">
           Visualiza y gestiona todas las citas veterinarias
         </Typography>
-        {isLoading && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-            <CircularProgress size={16} />
-            <Typography variant="caption" color="textSecondary">
-              Actualizando citas...
-            </Typography>
-          </Box>
-        )}
       </Box>
 
       {/* Calendario */}
-      {!isLoading && appointments.length === 0 && (
-        <Alert severity="info" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            No hay citas programadas en este período. Las citas se cargan automáticamente al cambiar de mes o vista.
-          </Typography>
-        </Alert>
-      )}
-
       <Card
         sx={{
           borderRadius: 2,
@@ -578,8 +521,7 @@ export default function AppointmentsCalendarPage() {
           view={currentView}
           onView={(view) => setCurrentView(view)}
           culture="es"
-          date={date}
-          onNavigate={(newDate) => setDate(newDate)}
+          onNavigate={setDate}
           onSelectEvent={handleSelectEvent}
           popup
           selectable
@@ -592,14 +534,6 @@ export default function AppointmentsCalendarPage() {
             day: 'Día',
             agenda: 'Agenda',
             noEventsInRange: 'No hay citas en este rango',
-            date: 'Fecha',
-            time: 'Hora',
-            event: 'Evento',
-            allDay: 'Todo el día',
-            work_week: 'Semana laboral',
-            yesterday: 'Ayer',
-            tomorrow: 'Mañana',
-            showMore: (total) => `+ Ver más (${total})`,
           }}
           style={{ height: '100%' }}
           onRangeChange={(range) => {

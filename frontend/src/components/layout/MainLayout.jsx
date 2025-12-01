@@ -33,8 +33,6 @@ import {
   Logout as LogoutIcon,
   AccountCircle as ProfileIcon,
 } from '@mui/icons-material';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import ChatbotWidget from '../chatbot/ChatbotWidget.jsx';
 
 export default function MainLayout() {
   const { isAuthenticated, user, logout } = useAuthStore();
@@ -70,7 +68,6 @@ export default function MainLayout() {
     if (!isAuthenticated) return [];
 
     const links = [
-      { label: 'Dashboard', icon: <AssessmentIcon />, path: '/dashboard', roles: ['Admin', 'Cliente', 'Recepcionista', 'Veterinario', 'Groomer'] },
       { label: 'Mascotas', icon: <PetsIcon />, path: '/pets', roles: ['Cliente', 'Recepcionista', 'Veterinario', 'Groomer', 'Admin'] },
       { label: 'Registrar Mascota', icon: <PetsIcon />, path: '/pets/register', roles: ['Cliente', 'Recepcionista'] },
       { label: 'Programar Cita', icon: <CalendarIcon />, path: '/appointments/new', roles: ['Cliente', 'Recepcionista'] },
@@ -81,7 +78,6 @@ export default function MainLayout() {
       { label: 'Usuarios', icon: <PeopleIcon />, path: '/admin/users', roles: ['Admin'] },
       { label: 'Especies', icon: <PetsIcon />, path: '/admin/species', roles: ['Admin'] },
       { label: 'Servicios', icon: <SettingsIcon />, path: '/admin/services', roles: ['Admin'] },
-      { label: 'Reportes', icon: <AssessmentIcon />, path: '/reports', roles: ['Admin'] },
     ];
 
     return links.filter((link) => link.roles.includes(user?.role));
@@ -382,8 +378,6 @@ export default function MainLayout() {
           <Outlet />
         </Container>
       </Box>
-      {/* Widget del Chatbot - Disponible en todas las páginas */}
-      {isAuthenticated && <ChatbotWidget />}
     </Box>
   );
 }

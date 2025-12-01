@@ -1,5 +1,3 @@
-// frontend/src/features/auth/RegisterPage.jsx
-import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
@@ -14,6 +12,7 @@ import {
   Link,
   CircularProgress,
   Alert,
+  Grid,
   InputAdornment,
   IconButton,
 } from '@mui/material';
@@ -21,8 +20,8 @@ import {
   PersonAdd as PersonAddIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
-  Home as HomeIcon, // <--- Importante: Importamos el icono de Home
 } from '@mui/icons-material';
+import { useState } from 'react';
 import apiClient from '../../api/axios';
 
 const registerUser = async (data) => {
@@ -55,18 +54,18 @@ export default function RegisterPage() {
 
   const mutation = useMutation({
     mutationFn: registerUser,
-    onSuccess: () => {
-      toast.success('Registro exitoso. Por favor, verifica tu email para confirmar tu cuenta.');
-      setTimeout(() => navigate('/login'), 2000);
+    onSuccess: (data) => {
+      toast.success(data.message || '¡Registro exitoso! Inicia sesión.');
+      navigate('/login');
     },
     onError: (error) => {
-      const message = error.response?.data?.message || 'Error al registrarse';
-      toast.error(message);
+      toast.error(
+        error.response?.data?.message || 'Ocurrió un error al registrarse.'
+      );
     },
   });
 
   const onSubmit = (data) => {
-    // eslint-disable-next-line no-unused-vars
     const { confirmPassword, ...registerData } = data;
     mutation.mutate(registerData);
   };
@@ -90,29 +89,6 @@ export default function RegisterPage() {
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
           }}
         >
-          {/* --- Botón Volver al Inicio --- */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }}>
-            <Button
-              component={RouterLink}
-              to="/"
-              startIcon={<HomeIcon />}
-              size="small"
-              sx={{
-                textTransform: 'none',
-                color: '#64748B', // Un gris azulado suave
-                fontWeight: 600,
-                minWidth: 'auto',
-                padding: '6px 12px',
-                '&:hover': {
-                  backgroundColor: '#F1F5F9',
-                  color: '#1E40AF',
-                },
-              }}
-            >
-              Volver al inicio
-            </Button>
-          </Box>
-
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: 2 }}>
             <Typography
@@ -126,7 +102,6 @@ export default function RegisterPage() {
             </Typography>
           </Box>
 
-          {/* Alerta de Error */}
           {mutation.isError && (
             <Alert severity="error" sx={{ mb: 2, borderRadius: 1 }}>
               {mutation.error?.response?.data?.message ||
@@ -136,54 +111,50 @@ export default function RegisterPage() {
 
           {/* Formulario */}
           <Box component="form" onSubmit={handleSubmit(onSubmit)}>
-            
-            {/* Nombre */}
             <Controller
-              name="firstName"
-              control={control}
-              rules={{
-                required: 'El nombre es obligatorio',
-                minLength: { value: 2, message: 'Mínimo 2 caracteres' },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Nombre"
-                  fullWidth
-                  size="small"
-                  error={!!errors.firstName}
-                  helperText={errors.firstName?.message}
-                  autoComplete="given-name"
-                  sx={{ mb: 2 }}
-                  disabled={mutation.isPending}
-                />
-              )}
-            />
-            
-            {/* Apellido */}
-            <Controller
-              name="lastName"
-              control={control}
-              rules={{
-                required: 'El apellido es obligatorio',
-                minLength: { value: 2, message: 'Mínimo 2 caracteres' },
-              }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Apellido"
-                  fullWidth
-                  size="small"
-                  error={!!errors.lastName}
-                  helperText={errors.lastName?.message}
-                  autoComplete="family-name"
-                  sx={{ mb: 2 }}
-                  disabled={mutation.isPending}
-                />
-              )}
-            />
+                name="firstName"
+                control={control}
+                rules={{
+                  required: 'El nombre es obligatorio',
+                  minLength: { value: 2, message: 'Mínimo 2 caracteres' },
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Nombre"
+                    fullWidth
+                    size="small"
+                    error={!!errors.firstName}
+                    helperText={errors.firstName?.message}
+                    autoComplete="given-name"
+                    sx={{ mb: 2 }}
+                    disabled={mutation.isPending}
+                  />
+                )}
+              />
+              
+              <Controller
+                name="lastName"
+                control={control}
+                rules={{
+                  required: 'El apellido es obligatorio',
+                  minLength: { value: 2, message: 'Mínimo 2 caracteres' },
+                }}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Apellido"
+                    fullWidth
+                    size="small"
+                    error={!!errors.lastName}
+                    helperText={errors.lastName?.message}
+                    autoComplete="family-name"
+                    sx={{ mb: 2 }}
+                    disabled={mutation.isPending}
+                  />
+                )}
+              />
 
-            {/* Email */}
             <Controller
               name="email"
               control={control}
@@ -210,7 +181,6 @@ export default function RegisterPage() {
               )}
             />
 
-            {/* Teléfono */}
             <Controller
               name="phone"
               control={control}
@@ -236,7 +206,6 @@ export default function RegisterPage() {
               )}
             />
 
-            {/* Contraseña */}
             <Controller
               name="password"
               control={control}
@@ -282,7 +251,6 @@ export default function RegisterPage() {
               )}
             />
 
-            {/* Confirmar Contraseña */}
             <Controller
               name="confirmPassword"
               control={control}
@@ -325,7 +293,6 @@ export default function RegisterPage() {
               )}
             />
 
-            {/* Botón Submit */}
             <Button
               type="submit"
               variant="contained"
@@ -350,7 +317,6 @@ export default function RegisterPage() {
             </Button>
           </Box>
 
-          {/* Link a Login */}
           <Typography
             variant="body2"
             align="center"
@@ -372,7 +338,6 @@ export default function RegisterPage() {
             </Link>
           </Typography>
 
-          {/* Separador */}
           <Box
             sx={{
               display: 'flex',
@@ -388,7 +353,6 @@ export default function RegisterPage() {
             <Box sx={{ flex: 1, height: '1px', bgcolor: '#E5E7EB' }} />
           </Box>
 
-          {/* Footer Legal */}
           <Alert severity="info" sx={{ borderRadius: 1, p: 0.5 }}>
             <Typography variant="caption">
               Al registrarte aceptas nuestros{' '}
