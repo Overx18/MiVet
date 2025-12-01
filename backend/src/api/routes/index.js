@@ -11,6 +11,9 @@ import productRoutes from './product.routes.js';
 import salesRoutes from './sales.routes.js';
 import medicalRecordRoutes from './medicalRecord.routes.js';
 import dashboardRoutes from './dashboard.routes.js';
+import reportRoutes from './report.routes.js';
+import contactRoutes from './contact.routes.js';
+import chatbotRoutes from './chatbot.routes.js';
 
 const router = Router();
 
@@ -25,5 +28,8 @@ router.use('/payments', paymentRoutes);
 router.use('/products', productRoutes); 
 router.use('/sales', salesRoutes);
 router.use('/medical-records', medicalRecordRoutes);
+router.use('/reports', reportRoutes);
+router.use('/contact', contactRoutes);
+router.use('/chatbot', chatbotRoutes);
 
 export default router;

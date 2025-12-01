@@ -1,150 +1,277 @@
-import { Container, Grid, Typography, Box, Card, Paper } from '@mui/material';
-import {
-  People as PeopleIcon,
-  Inventory as InventoryIcon,
-  Event as EventIcon,
+// frontend/src/features/dashboard/AdminDashboard.jsx
+import { useQuery } from '@tanstack/react-query';
+import { Grid, Typography, Box, Card, List, ListItem, ListItemText, Divider, CircularProgress, Alert, Paper, Chip } from '@mui/material';
+import { 
+  People as PeopleIcon, 
+  Inventory as InventoryIcon, 
+  Event as EventIcon, 
   AttachMoney as MoneyIcon,
+  Pets as PetsIcon,
+  CheckCircle as CheckCircleIcon,
   TrendingUp as TrendingUpIcon,
+  TrendingDown as TrendingDownIcon,
+  Warning as WarningIcon,
+  ShoppingCart as ShoppingCartIcon
 } from '@mui/icons-material';
-import WelcomeHeader from './components/WelcomeHeader';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Legend } from 'recharts';
+import StatCard from '../../components/ui/StatCard';
+import WelcomeHeader from '../../components/dashboard/WelcomeHeader';
+import apiClient from '../../api/axios';
+import { useAuthStore } from '../../store/auth.store';
 
-/**
- * StatCard Component - Tarjeta de estadística
- */
-const StatCard = ({ title, value, icon: Icon, color, bgColor, trend }) => (
-  <Paper
-    sx={{
-      padding: 3,
-      borderRadius: 2,
-      border: '1px solid #E5E7EB',
-      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)',
-      transition: 'all 0.3s ease',
-      '&:hover': {
-        boxShadow: '0 4px 12px rgba(30, 64, 175, 0.15)',
-        transform: 'translateY(-2px)',
-      },
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-    }}
-  >
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-      <Box
-        sx={{
-          width: 48,
-          height: 48,
-          borderRadius: '50%',
-          backgroundColor: bgColor || '#EFF6FF',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Icon sx={{ color, fontSize: 24 }} />
+const fetchDashboardData = (token) =>
+  apiClient.get('/dashboard', {
+    headers: { Authorization: `Bearer ${token}` },
+  }).then(res => res.data);
+
+const COLORS = ['#3F51B5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
+
+export default function AdminDashboard({ user }) {
+  const { token } = useAuthStore();
+
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['adminDashboard'],
+    queryFn: () => fetchDashboardData(token),
+    enabled: !!token,
+    staleTime: 60000,
+    refetchOnMount: true,
+  });
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <CircularProgress size={60} />
       </Box>
-      {trend && (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <TrendingUpIcon sx={{ color: '#10B981', fontSize: 18 }} />
-          <Typography variant="caption" sx={{ color: '#10B981', fontWeight: 700 }}>
-            +{trend}%
-          </Typography>
-        </Box>
-      )}
-    </Box>
+    );
+  }
 
-    <Box>
-      <Typography variant="caption" sx={{ color: '#6B7280', fontWeight: 600, display: 'block', mb: 0.5 }}>
-        {title}
-      </Typography>
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 700,
-          color,
-          lineHeight: 1.2,
-        }}
-      >
-        {value}
-      </Typography>
-    </Box>
-  </Paper>
-);
+  if (isError) {
+    return (
+      <Box sx={{ p: 4 }}>
+        <Alert severity="error">
+          Error al cargar el dashboard: {error.response?.data?.message || error.message}
+        </Alert>
+      </Box>
+    );
+  }
 
-export default function AdminDashboard({ data, user }) {
-  const stats = [
-    {
-      title: 'Usuarios Activos',
-      value: data?.userCount || 0,
-      icon: PeopleIcon,
-      color: '#1E40AF',
-      bgColor: '#EFF6FF',
-      trend: 12,
-    },
-    {
-      title: 'Citas Pendientes',
-      value: data?.pendingAppointments || 0,
-      icon: EventIcon,
-      color: '#D97706',
-      bgColor: '#FEF3C7',
-      trend: 8,
-    },
-    {
-      title: 'Stock Bajo',
-      value: data?.lowStockCount || 0,
-      icon: InventoryIcon,
-      color: '#DC2626',
-      bgColor: '#FEE2E2',
-      trend: -5,
-    },
-    {
-      title: 'Ingresos Hoy',
-      value: `S/ ${(data?.dailyIncome || 0).toFixed(2)}`,
-      icon: MoneyIcon,
-      color: '#059669',
-      bgColor: '#F0FDF4',
-      trend: 15,
-    },
-  ];
+  const formatCurrency = (amount) => `S/ ${parseFloat(amount).toFixed(2)}`;
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
+    <>
       <WelcomeHeader user={user} />
-
-      {/* Stats Grid */}
+      
+      {/* KPIs Principales */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {stats.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <StatCard {...stat} />
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard 
+            title="Usuarios Activos" 
+            value={data.userCount} 
+            icon={PeopleIcon} 
+            color="#3F51B5"
+            subtitle={`+${data.newUsersThisMonth} este mes`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard 
+            title="Citas Pendientes" 
+            value={data.pendingAppointments} 
+            icon={EventIcon} 
+            color="#F59E0B"
+            subtitle={`${data.totalAppointments} totales`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard 
+            title="Stock Crítico" 
+            value={data.criticalStockCount} 
+            icon={WarningIcon} 
+            color="#EF4444"
+            subtitle={`${data.lowStockCount} en stock bajo`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <StatCard 
+            title="Ingresos Hoy" 
+            value={formatCurrency(data.dailyIncome)} 
+            icon={MoneyIcon} 
+            color="#10B981"
+            trend={data.monthlyGrowth > 0 ? `+${data.monthlyGrowth}%` : `${data.monthlyGrowth}%`}
+          />
+        </Grid>
+      </Grid>
+
+      {/* KPIs Secundarios */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard 
+            title="Total Mascotas" 
+            value={data.totalPets} 
+            icon={PetsIcon} 
+            color="#8B5CF6"
+            subtitle={`+${data.activePets} nuevas este mes`}
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard 
+            title="Citas Completadas Hoy" 
+            value={data.completedAppointmentsToday} 
+            icon={CheckCircleIcon} 
+            color="#059669"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6} md={4}>
+          <StatCard 
+            title="Ingresos del Mes" 
+            value={formatCurrency(data.monthlyIncome)} 
+            icon={ShoppingCartIcon} 
+            color="#3F51B5"
+            trend={data.monthlyGrowth > 0 ? `+${data.monthlyGrowth}%` : `${data.monthlyGrowth}%`}
+          />
+        </Grid>
+      </Grid>
+
+      {/* Gráficos */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Citas por Mes */}
+        {data.appointmentsByMonth && data.appointmentsByMonth.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card sx={{ p: 3, borderRadius: 2, border: '1px solid #E5E7EB', height: '100%' }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                Citas por Mes (Últimos 6 meses)
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data.appointmentsByMonth}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="month" stroke="#6B7280" />
+                  <YAxis stroke="#6B7280" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 8 }}
+                  />
+                  <Bar dataKey="count" fill="#3F51B5" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
           </Grid>
-        ))}
+        )}
+
+        {/* Ingresos por Mes */}
+        {data.incomeByMonth && data.incomeByMonth.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card sx={{ p: 3, borderRadius: 2, border: '1px solid #E5E7EB', height: '100%' }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                Ingresos por Mes (S/)
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={data.incomeByMonth}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <XAxis dataKey="month" stroke="#6B7280" />
+                  <YAxis stroke="#6B7280" />
+                  <Tooltip 
+                    contentStyle={{ backgroundColor: '#FFFFFF', border: '1px solid #E5E7EB', borderRadius: 8 }}
+                    formatter={(value) => formatCurrency(value)}
+                  />
+                  <Line type="monotone" dataKey="income" stroke="#10B981" strokeWidth={3} dot={{ fill: '#10B981', r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
+          </Grid>
+        )}
       </Grid>
 
-      {/* Additional Sections */}
-      <Grid container spacing={3}>
-        {/* Próximas Secciones - Placeholder */}
-        <Grid item xs={12} md={6}>
-          <Card sx={{ p: 3, borderRadius: 2, border: '1px solid #E5E7EB' }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              📊 Actividad Reciente
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Aquí irán los gráficos y actividad reciente
-            </Typography>
-          </Card>
-        </Grid>
+      {/* Distribuciones */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        {/* Usuarios por Rol */}
+        {data.usersByRole && data.usersByRole.length > 0 && (
+          <Grid item xs={20} md={10}>
+            <Card sx={{ p: 3, borderRadius: 2, border: '1px solid #E5E7EB', height: '100%' }}>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                Distribución de Usuarios
+              </Typography>
+              <ResponsiveContainer width="100%" height={400}>
+                <PieChart>
+                  <Pie
+                    data={data.usersByRole}
+                    dataKey="count"
+                    nameKey="role"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    label
+                  >
+                    {data.usersByRole.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            </Card>
+          </Grid>
+        )}
 
-        <Grid item xs={12} md={6}>
-          <Card sx={{ p: 3, borderRadius: 2, border: '1px solid #E5E7EB' }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              📈 Reportes
-            </Typography>
-            <Typography variant="body2" color="textSecondary">
-              Aquí irán los reportes y estadísticas
-            </Typography>
-          </Card>
-        </Grid>
+        {/* Top Servicios */}
+        {data.topServices && data.topServices.length > 0 && (
+          <Grid item xs={12} md={6}>
+            <Card sx={{ p: 3, borderRadius: 2, border: '1px solid #E5E7EB', height: '100%' }}>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Top 5 Servicios Más Solicitados
+              </Typography>
+              <List>
+                {data.topServices.map((service, index) => (
+                  <Box key={index}>
+                    <ListItem>
+                      <ListItemText
+                        primary={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              {index + 1}. {service.name}
+                            </Typography>
+                            <Chip label={`${service.count} citas`} size="small" color="black" />
+                          </Box>
+                        }
+                        secondary={`Ingresos: ${formatCurrency(service.revenue)}`}
+                      />
+                    </ListItem>
+                    {index < data.topServices.length - 1 && <Divider />}
+                  </Box>
+                ))}
+              </List>
+            </Card>
+          </Grid>
+        )}
       </Grid>
-    </Container>
+
+      {/* Ventas Recientes */}
+      {data.recentSales && data.recentSales.length > 0 && (
+        <Card sx={{ p: 3, borderRadius: 2, border: '1px solid #E5E7EB' }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Ventas Recientes de Hoy
+          </Typography>
+          <List>
+            {data.recentSales.map((sale, index) => (
+              <Box key={sale.id}>
+                <ListItem>
+                  <ListItemText
+                    primary={sale.client}
+                    secondary={
+                      <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <span>{new Date(sale.date).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}</span>
+                        <Chip label={sale.paymentMethod || 'Efectivo'} size="small" variant="outlined" />
+                      </Box>
+                    }
+                  />
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#059669' }}>
+                    {formatCurrency(sale.amount)}
+                  </Typography>
+                </ListItem>
+                {index < data.recentSales.length - 1 && <Divider />}
+              </Box>
+            ))}
+          </List>
+        </Card>
+      )}
+    </>
   );
 }

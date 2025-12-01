@@ -32,7 +32,6 @@ const startServer = async () => {
     console.log('Base de datos sincronizada.');
     app.listen(config.port, () => {
       console.log(` Servidor corriendo en http://localhost:${config.port}`);
-      console.log('HF Token cargado:', process.env.HUGGINGFACE_API_KEY?.slice(0, 40));
       startReminderJob();
     });
   } catch (err) {

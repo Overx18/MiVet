@@ -5,7 +5,7 @@ import {
   Container, Typography, Box, Card, TextField, Grid, CircularProgress, Alert, Chip, Paper
 } from '@mui/material';
 import { Timeline, TimelineItem, TimelineSeparator, TimelineConnector, TimelineContent, TimelineDot, TimelineOppositeContent } from '@mui/lab';
-import { MedicalServices as MedicalServicesIcon, Healing as HealingIcon, Note as NoteIcon, Vaccines as VaccinesIcon } from '@mui/icons-material';
+import { MedicalServices as MedicalServicesIcon, Healing as HealingIcon, Note as NoteIcon, Vaccines as VaccinesIcon, History as HistoryIcon } from '@mui/icons-material';
 import apiClient from '../../api/axios';
 import { useAuthStore } from '../../store/auth.store';
 
@@ -34,9 +34,26 @@ export default function PetHistoryPage() {
 
   return (
     <Container maxWidth="lg" sx={{ paddingY: 4 }}>
-      <Typography variant="h1" sx={{ marginBottom: 4, color: '#1F2937', fontSize: { xs: '1.75rem', md: '2.5rem' } }}>
-        Historial Médico
-      </Typography>
+      <Box sx={{ marginBottom: 4 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, marginBottom: 1 }}>
+          <HistoryIcon sx={{ fontSize: 32, color: '#1E40AF' }} />
+          <Box>
+            <Typography 
+              variant="h1" 
+              sx={{ 
+                color: '#1F2937', 
+                fontSize: { xs: '1.75rem', md: '2.5rem' }, 
+                fontWeight: 700 
+              }}
+            >
+              Historial Médico
+            </Typography>
+            <Typography variant="body2" color="textSecondary">
+              Consulta todos los registros médicos de la mascota
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
       
       <Card sx={{ padding: 3, marginBottom: 4 }}>
         <TextField

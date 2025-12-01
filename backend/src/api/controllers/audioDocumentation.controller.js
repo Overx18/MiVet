@@ -1,110 +1,110 @@
 // backend/src/api/controllers/audioDocumentation.controller.js
 import createError from 'http-errors';
-import { HfInference } from '@huggingface/inference';
-    
-const hf = new HfInference(process.env.HUGGINGFACE_API_KEY || '');
+import { GoogleGenerativeAI } from '@google/generative-ai';
+
+// Inicializar el cliente de Gemini
+// Asegúrate de tener GEMINI_API_KEY en tu archivo .env
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 /**
- * Procesa texto transcrito y genera documentación médica estructurada
+ * Procesa texto transcrito y genera documentación médica estructurada usando Gemini
  * @param {string} transcribedText - Texto transcrito de la conversación
  * @returns {Promise<{diagnosis: string, treatment: string, notes: string}>}
  */
 async function processTranscriptionWithNLP(transcribedText) {
   try {
     // Si no hay API key, usar procesamiento básico
-    if (!process.env.HUGGINGFACE_API_KEY) {
+    if (!process.env.GEMINI_API_KEY) {
+      console.warn('Falta GEMINI_API_KEY, usando procesamiento básico.');
       return processBasicExtraction(transcribedText);
     }
 
-    // Usar Hugging Face para resumir y estructurar
-    const prompt = `Eres un asistente veterinario. Analiza la siguiente conversación de una consulta veterinaria y extrae información estructurada. Responde SOLO en formato JSON con las siguientes claves: diagnosis, treatment, notes.
+    // Configurar el modelo (gemini-1.5-flash es rápido y eficiente para texto)
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-Conversación:
-${transcribedText}
+    // Prompt diseñado para extraer exactamente lo que pediste en formato JSON
+    const prompt = `
+      Actúa como un asistente veterinario experto. Tu tarea es analizar la siguiente transcripción de audio de una consulta y extraer la información clave.
 
-Responde en formato JSON válido:`;
+      Transcripción: "${transcribedText}"
+
+      Instrucciones:
+      1. Identifica el Diagnóstico (problema o enfermedad detectada).
+      2. Identifica el Tratamiento (medicamentos, dosis, procedimientos).
+      3. Identifica Notas (recomendaciones, observaciones adicionales, próximas citas).
+      
+      IMPORTANTE: Responde ÚNICAMENTE con un objeto JSON válido (sin bloques de código markdown \`\`\`json).
+      El formato debe ser exactamente este:
+      {
+        "diagnosis": "Texto del diagnóstico aquí",
+        "treatment": "Texto del tratamiento aquí",
+        "notes": "Texto de las notas aquí"
+      }
+      Si no encuentras información para algún campo, pon "No especificado en el audio".
+    `;
 
     try {
-      // Intentar usar un modelo de Hugging Face para procesamiento
-      // Nota: Si no tienes API key, se usará procesamiento básico
-      const response = await hf.chatCompletion({
-        model: 'meta-llama/Llama-3.2-3B-Instruct',
-        messages: [{ role: "user", content: prompt }],
-        max_tokens: 500,
-        temperature: 0.3
-      });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      let text = response.text();
 
-      const generatedText = response.choices?.[0]?.message?.content || "";
-      
-      
-      // Intentar extraer JSON del texto generado
-      const jsonMatch = generatedText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-      try {
-          const parsed = JSON.parse(jsonMatch[0]);
-          return {
-            diagnosis: typeof parsed.diagnosis === "string"
-              ? parsed.diagnosis
-              : JSON.stringify(parsed.diagnosis ?? ""),
-        
-            treatment: typeof parsed.treatment === "string"
-              ? parsed.treatment
-              : JSON.stringify(parsed.treatment ?? ""),
-          
-            notes: typeof parsed.notes === "string"
-              ? parsed.notes
-              : JSON.stringify(parsed.notes ?? ""),
-          };
-          
-      } catch (parseError) {
-          console.warn('Error parseando JSON de Hugging Face:', parseError.message);
-      }
-      }
-    } catch (hfError) {
-      console.warn('Error con Hugging Face, usando procesamiento básico:', hfError.message);
-      }
-      
-    // Fallback a procesamiento básico
+      // Limpieza: A veces Gemini envuelve la respuesta en bloques de código markdown, los eliminamos
+      text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+
+      const jsonResponse = JSON.parse(text);
+
+      return {
+        diagnosis: jsonResponse.diagnosis || "No especificado",
+        treatment: jsonResponse.treatment || "No especificado",
+        notes: jsonResponse.notes || "No especificado"
+      };
+
+    } catch (geminiError) {
+      console.warn('Error interpretando respuesta de Gemini:', geminiError.message);
+      // Si falla el parseo del JSON o la API, usamos el básico
       return processBasicExtraction(transcribedText);
+    }
+
   } catch (error) {
-    console.error('Error procesando transcripción:', error);
+    console.error('Error general procesando transcripción:', error);
     return processBasicExtraction(transcribedText);
   }
 }
 
 /**
- * Procesamiento básico sin API externa
+ * Procesamiento básico sin API externa (Fallback)
  */
 function processBasicExtraction(text) {
   const lowerText = text.toLowerCase();
   
-  // Extraer diagnóstico (buscar palabras clave)
+  // Extraer diagnóstico (búsqueda simple de palabras clave)
   let diagnosis = '';
-  const diagnosisKeywords = ['diagnóstico', 'diagnostico', 'problema', 'enfermedad', 'condición', 'síntoma', 'sintoma'];
+  const diagnosisKeywords = ['diagnóstico', 'diagnostico', 'problema', 'tiene', 'presenta'];
   const diagnosisIndex = diagnosisKeywords.findIndex(keyword => lowerText.includes(keyword));
+  
   if (diagnosisIndex !== -1) {
     const startIndex = lowerText.indexOf(diagnosisKeywords[diagnosisIndex]);
-    const excerpt = text.substring(Math.max(0, startIndex), Math.min(text.length, startIndex + 200));
-    diagnosis = excerpt;
+    // Tomar un fragmento arbitrario
+    diagnosis = text.substring(startIndex, Math.min(text.length, startIndex + 150)) + '...';
   }
 
   // Extraer tratamiento
   let treatment = '';
-  const treatmentKeywords = ['tratamiento', 'medicamento', 'medicina', 'receta', 'prescripción', 'prescripcion', 'aplicar', 'administrar'];
+  const treatmentKeywords = ['tratamiento', 'receta', 'tomar', 'darle', 'aplicar', 'dosis'];
   const treatmentIndex = treatmentKeywords.findIndex(keyword => lowerText.includes(keyword));
+  
   if (treatmentIndex !== -1) {
     const startIndex = lowerText.indexOf(treatmentKeywords[treatmentIndex]);
-    const excerpt = text.substring(Math.max(0, startIndex), Math.min(text.length, startIndex + 200));
-    treatment = excerpt;
+    treatment = text.substring(startIndex, Math.min(text.length, startIndex + 150)) + '...';
   }
 
-  // Notas adicionales (todo el texto si no se encontró nada específico)
-  const notes = text.length > 500 ? text.substring(0, 500) + '...' : text;
+  // Notas (el resto o un resumen simple)
+  const notes = text.length > 300 ? 'Revisar transcripción completa para detalles.' : text;
 
   return {
-    diagnosis: diagnosis || 'Diagnóstico pendiente de revisión',
-    treatment: treatment || 'Tratamiento pendiente de revisión',
-    notes: notes || text,
+    diagnosis: diagnosis || 'Revisar transcripción',
+    treatment: treatment || 'Revisar transcripción',
+    notes: notes,
   };
 }
 
@@ -114,29 +114,29 @@ function processBasicExtraction(text) {
 export const processAudioTranscription = async (req, res, next) => {
   try {
     const { transcribedText, appointmentId } = req.body;
-    const userId = req.user.id;
 
     if (!transcribedText || typeof transcribedText !== 'string') {
       return next(createError(400, 'El texto transcrito es requerido.'));
     }
 
-    if (transcribedText.trim().length < 10) {
+    if (transcribedText.trim().length < 5) {
       return next(createError(400, 'El texto transcrito es demasiado corto.'));
     }
 
-    // Procesar con NLP
+    // Procesar con Gemini NLP
     const structuredData = await processTranscriptionWithNLP(transcribedText);
 
+    // [VERIFICACIÓN] Asegurarse de que la respuesta tiene el formato esperado
     res.status(200).json({
       success: true,
       data: {
         diagnosis: structuredData.diagnosis,
         treatment: structuredData.treatment,
         notes: structuredData.notes,
-        transcription: transcribedText, // Guardar la transcripción completa
+        transcription: transcribedText, // La transcripción completa se devuelve aquí
         appointmentId: appointmentId || null,
       },
-      message: 'Documentación generada exitosamente. Por favor, revisa y edita según sea necesario.',
+      message: 'Documentación generada exitosamente con IA.',
     });
   } catch (error) {
     next(error);

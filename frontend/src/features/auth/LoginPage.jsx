@@ -19,6 +19,7 @@ import {
   Login as LoginIcon,
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
+  Home as HomeIcon, // <--- Importado icono de casa
 } from '@mui/icons-material';
 import { useState } from 'react';
 import apiClient from '../../api/axios';
@@ -77,6 +78,29 @@ export default function LoginPage() {
             boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
           }}
         >
+          {/* --- Botón Volver al Inicio --- */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-start', mb: 1 }}>
+            <Button
+              component={RouterLink}
+              to="/"
+              startIcon={<HomeIcon />}
+              size="small"
+              sx={{
+                textTransform: 'none',
+                color: '#64748B', // Un gris azulado suave
+                fontWeight: 600,
+                minWidth: 'auto',
+                padding: '6px 12px',
+                '&:hover': {
+                  backgroundColor: '#F1F5F9',
+                  color: '#1E40AF',
+                },
+              }}
+            >
+              Volver al inicio
+            </Button>
+          </Box>
+
           <Box sx={{ textAlign: 'center', mb: 2 }}>
             <Typography
               variant="h4"
